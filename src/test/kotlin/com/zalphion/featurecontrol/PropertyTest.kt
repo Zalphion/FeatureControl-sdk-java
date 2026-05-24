@@ -5,7 +5,6 @@ import com.zalphion.featurecontrol.source.memory
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
 import java.math.BigDecimal
 import java.time.Duration
 import java.time.Instant
@@ -18,11 +17,6 @@ class PropertyTest {
     @Test
     fun `missing property`() {
         bundleFn.stringProperty("missing", "default").get() shouldBe "default"
-    }
-
-    @Test
-    fun `found property`() {
-        bundleFn.property("str", "default", onFailure = { fail(it) }, coerceFn = { it }).get() shouldBe "foo"
     }
 
     @Test

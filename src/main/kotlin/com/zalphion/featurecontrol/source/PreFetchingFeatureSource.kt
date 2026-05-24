@@ -5,7 +5,6 @@ import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asResultOr
 import dev.forkhandles.result4k.peek
 import dev.forkhandles.result4k.peekFailure
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
@@ -22,8 +21,8 @@ fun FeatureSource.preFetching(
     refreshInternal: Duration = Duration.ofMinutes(1),
     retryInterval: Duration = Duration.ofSeconds(1),
     scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(),
-    logger: Logger = LoggerFactory.getLogger(FeatureSource::class.java),
 ) = object: FeatureSource {
+    private val logger = LoggerFactory.getLogger(FeatureSource::class.java)
     private val inner = this@preFetching
     private val cache = AtomicReference<Features>()
     private val firstFetchFuture = CompletableFuture<FeatureSource>()

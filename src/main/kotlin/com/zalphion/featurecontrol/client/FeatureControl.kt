@@ -26,9 +26,9 @@ class FeatureControl @JvmOverloads constructor(
         .build()
 ) {
     companion object {
-        val northAmerica = FeatureControl(URI("https://na.featurecontrol.app"))
-        val europe = FeatureControl(URI("https://eu.featurecontrol.app"))
-        val asiaPacific = FeatureControl(URI("https://ap.featurecontrol.app"))
+        @JvmStatic val northAmerica = FeatureControl(URI("https://na.featurecontrol.app"))
+        @JvmStatic val europe = FeatureControl(URI("https://eu.featurecontrol.app"))
+        @JvmStatic val asiaPacific = FeatureControl(URI("https://ap.featurecontrol.app"))
     }
 
     @OptIn(ExperimentalSerializationApi::class)

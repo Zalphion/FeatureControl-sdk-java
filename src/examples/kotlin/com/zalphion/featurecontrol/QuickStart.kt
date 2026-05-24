@@ -7,26 +7,34 @@ import com.zalphion.featurecontrol.source.preFetching
 
 fun main() {
     /*
-     * Build a FeatureFlags instance from the Canada-sovereignty cloud.
+     * Build a FeatureFlags instance from the cloud provider.
      * The pre-fetching wrapper will cache the latest data and periodically refresh it.
+     *
+     * Fetching occurs in the background, but you can block on the `FeatureSource` for readiness.
+     * This is not recommended for production servers, as it may stall the application.
      */
-    val flags = FeatureSource
-        .http(FeatureControl.northAmerica, "my-sdk-key")
+    val features = FeatureSource
+        .http(FeatureControl.northAmerica, System.getenv("FEATURE_CONTROL_SDK_KEY"))
         .preFetching()
 
     /*
-     * Get and display a property.
-     * get() can be invoked later to reflect the most up-to-date value.
-     * If you don't want the latest properties, call get() once on init.
+     * You can define a property or flag on init and share it within your application;
+     * this is the idiomatic way to use FeatureControl.
      */
-    val greetingProperty = flags.stringProperty("greeting", default = "hello")
+    val greetingProperty = features.stringProperty("greeting", default = "hello")
+    val myFeatureFlag = features.flag("my-feature", defaultVariant = "off")
+
+    /*
+     * Get the latest property value.
+     * If the features are not yet ready, the default value is returned.
+     */
     println(greetingProperty.get())
 
     /*
-     * Flags require a recipient, since different recipients may be allocated different variants.
+     * Evaluate the flag for a recipient.
+     * Different recipients may result in different variants, based on your remote configuration.
      * You must always provide a default in case the flag is not defined.
      */
-    val myFeatureFlag = flags.flag("my-feature", defaultVariant = "off")
     when(myFeatureFlag.getVariant("user1")) {
         "off" -> println("Don't do cool thing")
         "on" -> println("Do cool thing")

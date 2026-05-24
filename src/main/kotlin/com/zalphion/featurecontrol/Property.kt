@@ -6,6 +6,7 @@ import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.peekFailure
 import dev.forkhandles.result4k.recover
+import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Duration
@@ -17,16 +18,19 @@ interface Property<Type: Any> {
     fun get(): Type
 }
 
+private val logger by lazy {
+    LoggerFactory.getLogger(Property::class.java)
+}
+
 fun <Type: Any> FeatureSource.property(
     name: String,
     default: Type,
-    onFailure: (String) -> Unit = ::println,
     coerceFn: (String) -> Type
 ) = object: Property<Type> {
     override val name = name
     override fun get() = safeGet()
         .flatMap { it.properties[name].asResultOr { "property $name not found" } }
-        .peekFailure(onFailure)
+        .peekFailure(logger::warn)
         .map { coerceFn(it()) }
         .recover { default }
 }

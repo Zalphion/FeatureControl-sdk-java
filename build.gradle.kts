@@ -35,6 +35,8 @@ tasks.test {
 
 sourceSets {
     create("examples") {
+        java.srcDirs("src/examples/java")
+        kotlin.srcDirs("src/examples/kotlin")
         compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
         runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
     }
