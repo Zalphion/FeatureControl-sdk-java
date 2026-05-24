@@ -9,7 +9,7 @@ import kotlinx.serialization.json.encodeToStream
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 
-class FakeServer(private vararg val bundles: Pair<String, FeatureBundle>) {
+internal class FakeServer(private vararg val bundles: Pair<String, FeatureBundle>) {
 
     private val responses = mutableListOf<Pair<String, Int>>()
     fun getResponses() = responses.toList()

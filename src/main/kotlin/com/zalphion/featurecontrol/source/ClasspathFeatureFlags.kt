@@ -1,6 +1,7 @@
 package com.zalphion.featurecontrol.source
 
 import com.zalphion.featurecontrol.FeatureBundle
+import com.zalphion.featurecontrol.toFeatures
 import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asResultOr
 import dev.forkhandles.result4k.map
@@ -15,25 +16,26 @@ import java.util.concurrent.CompletableFuture
  * Defaults to the Thread Context ClassLoader to ensure resources in the caller's module are visible.
  */
 @OptIn(ExperimentalSerializationApi::class)
-fun FeatureFlags.Companion.classpath(
+fun FeatureSource.Companion.classpath(
     absolutePath: String,
-    classLoader: ClassLoader = Thread.currentThread().contextClassLoader ?: FeatureFlags::class.java.classLoader
-) = object: FeatureFlags {
+    classLoader: ClassLoader = Thread.currentThread().contextClassLoader ?: FeatureSource::class.java.classLoader
+) = object: FeatureSource {
 
     private val bundle = try {
         classLoader.getResourceAsStream(absolutePath)
             .asResultOr { "Could not read bundle from classpath: $absolutePath" }
             .map { Json.decodeFromStream(FeatureBundle.serializer(), it) }
+            .map { it.toFeatures() }
     } catch (e: Exception) {
         "Failed to read bundle from classpath: $absolutePath: ${e.message}".asFailure()
     }
 
-    override fun getBundle() = bundle
+    override fun get() = bundle
     override fun close() {}
 
-    override val readyFuture: CompletableFuture<FeatureFlags> = bundle
-        .map { CompletableFuture.completedFuture<FeatureFlags>(this) }
-        .recover { CompletableFuture<FeatureFlags>().apply {
+    override val readyFuture: CompletableFuture<FeatureSource> = bundle
+        .map { CompletableFuture.completedFuture<FeatureSource>(this) }
+        .recover { CompletableFuture<FeatureSource>().apply {
             completeExceptionally(IllegalStateException(it))
         } }
 }

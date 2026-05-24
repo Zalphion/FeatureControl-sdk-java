@@ -1,6 +1,6 @@
 package com.zalphion.featurecontrol
 
-import com.zalphion.featurecontrol.source.FeatureFlags
+import com.zalphion.featurecontrol.source.FeatureSource
 import dev.forkhandles.result4k.asResultOr
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.map
@@ -17,23 +17,23 @@ interface Property<Type: Any> {
     fun get(): Type
 }
 
-fun <Type: Any> FeatureFlags.property(
+fun <Type: Any> FeatureSource.property(
     name: String,
     default: Type,
     onFailure: (String) -> Unit = ::println,
     coerceFn: (String) -> Type
 ) = object: Property<Type> {
     override val name = name
-    override fun get() = getBundle()
+    override fun get() = safeGet()
         .flatMap { it.properties[name].asResultOr { "property $name not found" } }
         .peekFailure(onFailure)
-        .map(coerceFn)
+        .map { coerceFn(it()) }
         .recover { default }
 }
 
-fun FeatureFlags.stringProperty(name: String, default: String) = property(name, default) { it }
+fun FeatureSource.stringProperty(name: String, default: String) = property(name, default) { it }
 
-fun FeatureFlags.booleanProperty(name: String, default: Boolean) = property(name, default) { text ->
+fun FeatureSource.booleanProperty(name: String, default: Boolean) = property(name, default) { text ->
     when(text.lowercase()) {
         "true" -> true
         "false" -> false
@@ -41,7 +41,7 @@ fun FeatureFlags.booleanProperty(name: String, default: Boolean) = property(name
     }
 }
 
-inline fun <reified EnumType: Enum<EnumType>> FeatureFlags.enumProperty(
+inline fun <reified EnumType: Enum<EnumType>> FeatureSource.enumProperty(
     name: String,
     default: EnumType,
     ignoreCase: Boolean = false
@@ -49,18 +49,18 @@ inline fun <reified EnumType: Enum<EnumType>> FeatureFlags.enumProperty(
     enumValues<EnumType>().first { it.name.equals(text, ignoreCase = ignoreCase) }
 }
 
-fun FeatureFlags.base64Property(
+fun FeatureSource.base64Property(
     name: String,
     default: ByteArray,
     decoder: Base64.Decoder = Base64.getDecoder()
 ) = property(name, default) { decoder.decode(it) }
 
-fun FeatureFlags.intProperty(name: String, default: Int) = property(name, default) { it.toInt() }
-fun FeatureFlags.longProperty(name: String, default: Long) = property(name, default) { it.toLong() }
-fun FeatureFlags.doubleProperty(name: String, default: Double) = property(name, default) { it.toDouble() }
-fun FeatureFlags.floatProperty(name: String, default: Float) = property(name, default) { it.toFloat() }
-fun FeatureFlags.bigDecimalProperty(name: String, default: BigDecimal) = property(name, default) { BigDecimal(it) }
-fun FeatureFlags.bigIntProperty(name: String, default: BigInteger) = property(name, default) { BigInteger(it) }
+fun FeatureSource.intProperty(name: String, default: Int) = property(name, default) { it.toInt() }
+fun FeatureSource.longProperty(name: String, default: Long) = property(name, default) { it.toLong() }
+fun FeatureSource.doubleProperty(name: String, default: Double) = property(name, default) { it.toDouble() }
+fun FeatureSource.floatProperty(name: String, default: Float) = property(name, default) { it.toFloat() }
+fun FeatureSource.bigDecimalProperty(name: String, default: BigDecimal) = property(name, default) { BigDecimal(it) }
+fun FeatureSource.bigIntProperty(name: String, default: BigInteger) = property(name, default) { BigInteger(it) }
 
-fun FeatureFlags.instantProperty(name: String, default: Instant) = property(name, default) { Instant.parse(it) }
-fun FeatureFlags.durationProperty(name: String, default: Duration) = property(name, default) { Duration.parse(it) }
+fun FeatureSource.instantProperty(name: String, default: Instant) = property(name, default) { Instant.parse(it) }
+fun FeatureSource.durationProperty(name: String, default: Duration) = property(name, default) { Duration.parse(it) }

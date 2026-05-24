@@ -1,7 +1,7 @@
 package com.zalphion.featurecontrol
 
-import com.zalphion.featurecontrol.source.FeatureFlags
-import com.zalphion.featurecontrol.source.classpath
+import com.zalphion.featurecontrol.source.FeatureSource
+import com.zalphion.featurecontrol.source.memory
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -13,7 +13,7 @@ import java.time.format.DateTimeParseException
 
 class PropertyTest {
 
-    private val bundleFn = FeatureFlags.classpath("com/zalphion/featurecontrol/bundle1.json")
+    private val bundleFn = FeatureSource.memory(testBundle.toFeatures())
 
     @Test
     fun `missing property`() {

@@ -24,6 +24,9 @@ dependencies {
 
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        allWarningsAsErrors = true
+    }
 }
 
 tasks.test {
@@ -32,11 +35,12 @@ tasks.test {
 
 sourceSets {
     create("examples") {
-        compileClasspath += sourceSets.main.get().output
-        runtimeClasspath += sourceSets.main.get().output
+        compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
     }
 }
 
 val examplesImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
+    extendsFrom(configurations.testImplementation.get())
 }

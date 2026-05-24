@@ -1,7 +1,7 @@
 package com.zalphion.featurecontrol.source
 
-import com.zalphion.featurecontrol.FeatureBundle
-import com.zalphion.featurecontrol.bundle1
+import com.zalphion.featurecontrol.Features
+import com.zalphion.featurecontrol.stringProperty
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asSuccess
@@ -13,39 +13,43 @@ import dev.forkhandles.time.DeterministicScheduler
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
-class PreFetchingFeatureFlagsTest {
+class PreFetchingFeatureSourceTest {
+
+    private var value = "foo"
+    private val features = Features(
+        properties = mapOf("str" to { value }),
+        flags = emptyMap()
+    )
 
     private val scheduler = DeterministicScheduler()
     private var invocations = 0
-    private var nextResult: Result4k<FeatureBundle, String> = bundle1.asSuccess()
+    private var nextResult: Result4k<Features, String> = features.asSuccess()
 
-    private val flags = object: FeatureFlags {
-        override fun getBundle() = nextResult.also { invocations++ }
-        override fun close() {}
-        override val readyFuture: CompletableFuture<FeatureFlags> = CompletableFuture.completedFuture(this)
-    }.preFetching(
+    private val source = FeatureSource.memory { invocations++; nextResult }.preFetching(
         refreshInternal = Duration.ofMinutes(1),
         retryInterval = Duration.ofSeconds(1),
         scheduler = scheduler
     )
 
+    private val property = source.stringProperty("prop", default = "default")
+
     @Test
     fun `ready after fetch`() {
-        flags.readyFuture.isDone shouldBe false
-        flags.getBundle() shouldBeFailure "FeatureFlags is not yet ready"
+        source.readyFuture.isDone shouldBe false
+        source.get() shouldBeFailure "FeatureFlags is not yet ready"
 
         scheduler.tick(Duration.ZERO)
-        flags.readyFuture.get() shouldBe flags
-        flags.getBundle() shouldBeSuccess bundle1
+        source.readyFuture.isDone shouldBe true
+        source.get().shouldBeSuccess()
     }
 
     @Test
     fun `not ready if underlying isn't ready`() {
-        val future = CompletableFuture<FeatureFlags>()
-        val flags = object: FeatureFlags {
-            override fun getBundle() = nextResult.also { invocations++ }
+        val future = CompletableFuture<FeatureSource>()
+        val flags = object: FeatureSource {
+            override fun get() = nextResult.also { invocations++ }
             override fun close() {}
-            override val readyFuture: CompletableFuture<FeatureFlags> = future
+            override val readyFuture: CompletableFuture<FeatureSource> = future
         }.preFetching(scheduler = scheduler)
 
         scheduler.tick(Duration.ZERO)
@@ -62,33 +66,33 @@ class PreFetchingFeatureFlagsTest {
     @Test
     fun `caches bundle`() {
         scheduler.tick(Duration.ZERO)
-        flags.readyFuture.get()
+        source.readyFuture.get()
 
-        flags.getBundle() shouldBeSuccess bundle1
-        flags.getBundle() shouldBeSuccess bundle1
+        source.get().shouldBeSuccess()
+        source.get().shouldBeSuccess()
         invocations shouldBe 1
     }
 
     @Test
     fun `refreshes after delay`() {
         scheduler.tick(Duration.ZERO)
-        flags.readyFuture.get()
+        property.get() shouldBe "foo"
 
-        nextResult = bundle1.copy(properties = mapOf("str" to "bar")).asSuccess()
-        flags.getBundle() shouldBeSuccess bundle1
-
-        scheduler.tick(Duration.ofSeconds(40))
-        flags.getBundle() shouldBeSuccess bundle1
+        value = "bar"
+        property.get() shouldBe "foo"
 
         scheduler.tick(Duration.ofSeconds(40))
-        flags.getBundle() shouldBeSuccess bundle1.copy(properties = mapOf("str" to "bar"))
+        property.get() shouldBe "foo"
+
+        scheduler.tick(Duration.ofSeconds(40))
+        property.get() shouldBe "bar"
     }
 
     @Test
     fun `not ready if getBundle fails`() {
         nextResult = "foo".asFailure()
         scheduler.tick(Duration.ZERO)
-        flags.readyFuture.isDone shouldBe false
+        source.readyFuture.isDone shouldBe false
     }
 
     @Test
@@ -96,17 +100,17 @@ class PreFetchingFeatureFlagsTest {
         nextResult = "foo".asFailure()
 
         scheduler.tick(Duration.ZERO)
-        flags.readyFuture.isDone shouldBe false
+        source.readyFuture.isDone shouldBe false
         invocations shouldBe 1
 
         scheduler.tick(Duration.ofSeconds(1))
-        flags.readyFuture.isDone shouldBe false
+        source.readyFuture.isDone shouldBe false
         invocations shouldBe 2
 
-        nextResult = bundle1.asSuccess()
+        nextResult = features.asSuccess()
 
         scheduler.tick(Duration.ofSeconds(1))
-        flags.readyFuture.isDone shouldBe true
+        source.readyFuture.isDone shouldBe true
         invocations shouldBe 3
     }
 
@@ -114,29 +118,29 @@ class PreFetchingFeatureFlagsTest {
     fun `doesn't retry if bundle fails after ready`() {
         scheduler.tick(Duration.ZERO)
         invocations shouldBe 1
-        flags.getBundle() shouldBeSuccess bundle1
+        source.get().shouldBeSuccess()
 
         nextResult = "foo".asFailure()
 
         scheduler.tick(Duration.ofMinutes(1))
         invocations shouldBe 2
-        flags.getBundle() shouldBeSuccess bundle1
+        source.get().shouldBeSuccess()
 
         scheduler.tick(Duration.ofSeconds(30))
         invocations shouldBe 2
-        flags.getBundle() shouldBeSuccess bundle1
+        source.get().shouldBeSuccess()
 
         scheduler.tick(Duration.ofSeconds(30))
         invocations shouldBe 3
-        flags.getBundle() shouldBeSuccess bundle1
+        source.get().shouldBeSuccess()
     }
 
     @Test
     fun `fails if closed`() {
         scheduler.tick(Duration.ZERO)
-        flags.readyFuture.get()
+        source.readyFuture.get()
 
-        flags.close()
-        flags.getBundle() shouldBeFailure "FeatureFlags is closed"
+        source.close()
+        source.get() shouldBeFailure "FeatureFlags is closed"
     }
 }

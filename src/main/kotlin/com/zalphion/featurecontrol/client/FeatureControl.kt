@@ -18,7 +18,7 @@ import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandlers
 import kotlin.jvm.optionals.getOrElse
 
-class FeatureControlClient(
+class FeatureControl @JvmOverloads constructor(
     private val baseUri: URI,
     private val client: HttpClient = HttpClient.newBuilder()
         .version(HTTP_1_1)
@@ -26,14 +26,13 @@ class FeatureControlClient(
         .build()
 ) {
     companion object {
-        val canada = FeatureControlClient(URI("https://ca.featurecontrol.app"))
-        val europe = FeatureControlClient(URI("https://eu.featurecontrol.app"))
-        val usa = FeatureControlClient(URI("https://us.featurecontrol.app"))
-        val oceania = FeatureControlClient(URI("https://oc.featurecontrol.app"))
+        val northAmerica = FeatureControl(URI("https://na.featurecontrol.app"))
+        val europe = FeatureControl(URI("https://eu.featurecontrol.app"))
+        val asiaPacific = FeatureControl(URI("https://ap.featurecontrol.app"))
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun getBundle(sdkKey: String, ifNoneMatch: String? = null): Result4k<BundleResponse, String> {
+    internal fun getBundle(sdkKey: String, ifNoneMatch: String? = null): Result4k<BundleResponse, String> {
         val request = HttpRequest.newBuilder().run {
             GET()
             uri(baseUri.resolve("/api/sdk_v1/bundle"))

@@ -1,7 +1,8 @@
 package com.zalphion.featurecontrol.source
 
-import com.zalphion.featurecontrol.FeatureBundle
-import com.zalphion.featurecontrol.bundle1
+import com.zalphion.featurecontrol.Features
+import com.zalphion.featurecontrol.testBundle
+import com.zalphion.featurecontrol.toFeatures
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asSuccess
@@ -15,16 +16,12 @@ import java.time.Instant
 import java.time.ZoneId
 import java.util.concurrent.CompletableFuture
 
-class CachingFeatureFlagsTest {
+class CachingFeatureSourceTest {
 
     private var time = Instant.parse("2026-01-01T12:00:00Z")
     private var invocations = 0
-    private var nextResult: Result4k<FeatureBundle, String> = bundle1.asSuccess()
-    private val flags = object: FeatureFlags {
-        override fun getBundle() = nextResult.also { invocations++ }
-        override val readyFuture: CompletableFuture<FeatureFlags> = CompletableFuture.completedFuture(this)
-        override fun close() { }
-    }.caching(
+    private var nextResult: Result4k<Features, String> = testBundle.toFeatures().asSuccess()
+    private val flags = FeatureSource.memory { invocations++; nextResult }.caching(
         ttl = Duration.ofMinutes(1),
         clock = object: Clock() {
             override fun instant() = time
@@ -40,11 +37,11 @@ class CachingFeatureFlagsTest {
 
     @Test
     fun `not ready if underlying isn't ready`() {
-        val future = CompletableFuture<FeatureFlags>()
-        val flags = object: FeatureFlags {
-            override fun getBundle() = nextResult
+        val future = CompletableFuture<FeatureSource>()
+        val flags = object: FeatureSource {
+            override fun get() = nextResult
             override fun close() {}
-            override val readyFuture: CompletableFuture<FeatureFlags> = future
+            override val readyFuture: CompletableFuture<FeatureSource> = future
         }.caching()
 
         flags.readyFuture.isDone shouldBe false
@@ -55,23 +52,23 @@ class CachingFeatureFlagsTest {
     @Test
     fun `blocks on get`() {
         invocations shouldBe 0
-        flags.getBundle() shouldBeSuccess bundle1
+        flags.get().shouldBeSuccess()
         invocations shouldBe 1
     }
 
     @Test
     fun `caches bundle`() {
-        flags.getBundle() shouldBeSuccess bundle1
+        flags.get().shouldBeSuccess()
         invocations shouldBe 1
 
         nextResult = "foo".asFailure()
 
         time += Duration.ofSeconds(30)
-        flags.getBundle() shouldBeSuccess bundle1
+        flags.get().shouldBeSuccess()
         invocations shouldBe 1
 
         time += Duration.ofSeconds(30)
-        flags.getBundle() shouldBeFailure "foo"
+        flags.get() shouldBeFailure "foo"
         invocations shouldBe 2
     }
 }

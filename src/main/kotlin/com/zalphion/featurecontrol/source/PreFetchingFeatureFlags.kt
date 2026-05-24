@@ -1,6 +1,6 @@
 package com.zalphion.featurecontrol.source
 
-import com.zalphion.featurecontrol.FeatureBundle
+import com.zalphion.featurecontrol.Features
 import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asResultOr
 import dev.forkhandles.result4k.peek
@@ -18,21 +18,21 @@ import java.util.concurrent.atomic.AtomicReference
  * Caches a FeatureBundle asynchronously with the help of a background thread.
  * The caller will never be blocked by a network call.
  */
-fun FeatureFlags.preFetching(
+fun FeatureSource.preFetching(
     refreshInternal: Duration = Duration.ofMinutes(1),
     retryInterval: Duration = Duration.ofSeconds(1),
     scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(),
-    logger: Logger = LoggerFactory.getLogger(FeatureFlags::class.java),
-) = object: FeatureFlags {
+    logger: Logger = LoggerFactory.getLogger(FeatureSource::class.java),
+) = object: FeatureSource {
     private val inner = this@preFetching
-    private val cache = AtomicReference<FeatureBundle>()
-    private val firstFetchFuture = CompletableFuture<FeatureFlags>()
+    private val cache = AtomicReference<Features>()
+    private val firstFetchFuture = CompletableFuture<FeatureSource>()
 
     private fun fetchNow() {
         if (scheduler.isShutdown) return
 
         try {
-            inner.getBundle().peek {
+            inner.get().peek {
                 cache.set(it)
                 if (firstFetchFuture.complete(this)) {
                     logger.debug("Feature Bundle initialized successfully")
@@ -54,7 +54,7 @@ fun FeatureFlags.preFetching(
     }
 
     init {
-        inner.readyFuture.whenComplete { _: FeatureFlags?, throwable: Throwable? ->
+        inner.readyFuture.whenComplete { _: FeatureSource?, throwable: Throwable? ->
             if (throwable == null) {
                 scheduler.scheduleWithFixedDelay(::fetchNow, 0, refreshInternal.toMillis(), TimeUnit.MILLISECONDS)
             } else {
@@ -63,9 +63,9 @@ fun FeatureFlags.preFetching(
         }
     }
 
-    override fun getBundle() = when {
-        scheduler.isShutdown -> "${FeatureFlags::class.simpleName} is closed".asFailure()
-        !readyFuture.isDone -> "${FeatureFlags::class.simpleName} is not yet ready".asFailure()
+    override fun get() = when {
+        scheduler.isShutdown -> "${FeatureSource::class.simpleName} is closed".asFailure()
+        !readyFuture.isDone -> "${FeatureSource::class.simpleName} is not yet ready".asFailure()
         else -> cache.get().asResultOr { "A bundle has not yet been successfully fetched" }
     }
 
@@ -74,6 +74,6 @@ fun FeatureFlags.preFetching(
         inner.close()
     }
 
-    override val readyFuture: CompletableFuture<FeatureFlags> =
+    override val readyFuture: CompletableFuture<FeatureSource> =
         inner.readyFuture.thenCompose { firstFetchFuture }
 }

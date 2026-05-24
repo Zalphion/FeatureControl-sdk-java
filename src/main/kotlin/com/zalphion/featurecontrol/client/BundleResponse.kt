@@ -2,13 +2,13 @@ package com.zalphion.featurecontrol.client
 
 import com.zalphion.featurecontrol.FeatureBundle
 
-sealed interface BundleResponse
+internal sealed interface BundleResponse
 
-data class TaggedSdkBundle(
+internal data class TaggedSdkBundle(
     val bundle: FeatureBundle,
     val eTag: String
 ): BundleResponse
 
-data class BundleStillCurrent(
+internal data class BundleStillCurrent(
     val eTag: String
 ): BundleResponse
