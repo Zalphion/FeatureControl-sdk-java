@@ -13,17 +13,16 @@ import dev.forkhandles.time.DeterministicScheduler
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
-class PreFetchingFeatureSourceTest {
+private fun buildFeatures(propValue: String) = Features(
+    properties = mapOf("prop" to { propValue }),
+    flags = emptyMap()
+)
 
-    private var value = "foo"
-    private val features = Features(
-        properties = mapOf("str" to { value }),
-        flags = emptyMap()
-    )
+class PreFetchingFeatureSourceTest {
 
     private val scheduler = DeterministicScheduler()
     private var invocations = 0
-    private var nextResult: Result4k<Features, String> = features.asSuccess()
+    private var nextResult: Result4k<Features, String> = buildFeatures("foo").asSuccess()
 
     private val source = FeatureSource.memory { invocations++; nextResult }.preFetching(
         refreshInternal = Duration.ofMinutes(1),
@@ -36,7 +35,7 @@ class PreFetchingFeatureSourceTest {
     @Test
     fun `ready after fetch`() {
         source.readyFuture.isDone shouldBe false
-        source.get() shouldBeFailure "FeatureFlags is not yet ready"
+        source.get() shouldBeFailure "FeatureSource is not yet ready"
 
         scheduler.tick(Duration.ZERO)
         source.readyFuture.isDone shouldBe true
@@ -76,16 +75,18 @@ class PreFetchingFeatureSourceTest {
     @Test
     fun `refreshes after delay`() {
         scheduler.tick(Duration.ZERO)
-        property.get() shouldBe "foo"
+        source.readyFuture.isDone shouldBe true
 
-        value = "bar"
-        property.get() shouldBe "foo"
+        property.get().also { invocations shouldBe 1 } shouldBe "foo"
+
+        nextResult = buildFeatures("bar").asSuccess()
+        property.get().also { invocations shouldBe 1 } shouldBe "foo"
 
         scheduler.tick(Duration.ofSeconds(40))
-        property.get() shouldBe "foo"
+        property.get().also { invocations shouldBe 1 } shouldBe "foo"
 
         scheduler.tick(Duration.ofSeconds(40))
-        property.get() shouldBe "bar"
+        property.get().also { invocations shouldBe 2 } shouldBe "bar"
     }
 
     @Test
@@ -107,7 +108,7 @@ class PreFetchingFeatureSourceTest {
         source.readyFuture.isDone shouldBe false
         invocations shouldBe 2
 
-        nextResult = features.asSuccess()
+        nextResult = buildFeatures("foo").asSuccess()
 
         scheduler.tick(Duration.ofSeconds(1))
         source.readyFuture.isDone shouldBe true
@@ -141,6 +142,6 @@ class PreFetchingFeatureSourceTest {
         source.readyFuture.get()
 
         source.close()
-        source.get() shouldBeFailure "FeatureFlags is closed"
+        source.get() shouldBeFailure "FeatureSource is closed"
     }
 }
