@@ -13,7 +13,7 @@ Official JVM SDK for the Feature Control Platform.  Supports **Kotlin** and **Ja
 
 ## Quickstart
 
-<details>
+<details open>
 <summary>Kotlin</summary>
 
 ```kotlin
@@ -111,6 +111,134 @@ public class JavaQuickstart {
             default:
                 System.out.println("Unknown variant");
         }
+    }
+}
+```
+
+</details>
+
+## Test Support
+
+<details open>
+<summary>Kotlin</summary>
+
+```kotlin
+class BusinessModule(
+    private val random: Random,
+    featureSource: FeatureSource,
+) {
+    private val treatsDoctrine = featureSource.flag("treats-doctrine", defaultVariant = "plenty")
+
+    fun shouldGiveTreats(catId: String): Boolean {
+        return when(treatsDoctrine.getVariant(catId)) {
+            "copious" -> random.nextInt(10) > 2
+            "plenty" -> random.nextInt(10) > 5
+            else -> false
+        }
+    }
+}
+
+class FeatureTest {
+
+    private var doctrine = "none"
+
+    private val testObj = BusinessModule(
+        random = Random(42),
+        featureSource = FeatureSource.memory(
+            flags = mapOf("treats-doctrine" to { doctrine })
+        )
+    )
+
+    private fun calculateDispenseRate(ids: Collection<String>): Float {
+        if (ids.isEmpty()) return 0f
+        val results = ids.map { testObj.shouldGiveTreats(it) }
+        return results.count { it }.toFloat() / results.size
+    }
+
+    private val testGroup = 1.rangeTo(1_000).map { "cat$it" }
+
+    @Test
+    fun `copious treats`() {
+        doctrine = "copious"
+        calculateDispenseRate(testGroup) shouldBe (0.683f plusOrMinus 0.05f)
+    }
+
+    @Test
+    fun `plenty of treats`() {
+        doctrine = "plenty"
+        calculateDispenseRate(testGroup) shouldBe (0.381f plusOrMinus 0.05f)
+    }
+
+    @Test
+    fun `no treats`() {
+        calculateDispenseRate(testGroup) shouldBe 0f
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Java</summary>
+
+```java
+public class JavaTest {
+
+    private record BusinessModule(
+            @NotNull Random random,
+            @NotNull FeatureFlag treatsDoctrine
+    ) {
+
+        public static @NotNull BusinessModule create(
+                @NotNull Random random,
+                @NotNull JavaFeatureSource source
+        ) {
+            final var flag = source.getFlag("treats-doctrine", "plenty");
+            return new BusinessModule(random, flag);
+        }
+
+        public boolean shouldGiveTreats(@NotNull String catId) {
+            return switch (treatsDoctrine.getVariant(catId)) {
+                case "copious" -> true;
+                case "plenty" -> random.nextBoolean();
+                default -> false;
+            };
+        }
+    }
+
+    private @NotNull String doctrine = "none";
+
+    private final @NotNull BusinessModule testObj = BusinessModule.create(
+            new Random(42),
+            JavaFeatureSourceBuilder.memory(
+                    new Features(
+                        Map.of("treats-doctrine", (recipient) -> doctrine),
+                        Map.of()
+                    )
+            ).uncached()
+    );
+
+    @Test
+    public void copiousTreats() {
+        doctrine = "copious";
+        Assertions.assertTrue(testObj.shouldGiveTreats("cat1"));
+        Assertions.assertTrue(testObj.shouldGiveTreats("cat2"));
+        Assertions.assertTrue(testObj.shouldGiveTreats("cat3"));
+    }
+
+    @Test
+    public void plentyTreats() {
+        doctrine = "plenty";
+        Assertions.assertTrue(testObj.shouldGiveTreats("cat1"));
+        Assertions.assertFalse(testObj.shouldGiveTreats("cat2"));
+        Assertions.assertTrue(testObj.shouldGiveTreats("cat3"));
+    }
+
+    @Test
+    public void noneTreats() {
+        Assertions.assertFalse(testObj.shouldGiveTreats("cat1"));
+        Assertions.assertFalse(testObj.shouldGiveTreats("cat2"));
+        Assertions.assertFalse(testObj.shouldGiveTreats("cat3"));
     }
 }
 ```
