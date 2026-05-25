@@ -25,8 +25,8 @@ fun main() {
      * Fetching occurs in the background, but you can block on the `FeatureSource` for readiness.
      * This is not recommended for production servers, as it may stall the application.
      */
-    val features = FeatureSource
-        .http(FeatureControl.northAmerica, System.getenv("FEATURE_CONTROL_SDK_KEY"))
+    val features = FeatureControl.northAmerica
+        .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
         .preFetching()
 
     /*

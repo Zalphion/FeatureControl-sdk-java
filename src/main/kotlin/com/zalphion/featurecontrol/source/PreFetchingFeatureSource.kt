@@ -1,7 +1,6 @@
 package com.zalphion.featurecontrol.source
 
 import com.zalphion.featurecontrol.Features
-import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asResultOr
 import dev.forkhandles.result4k.peek
 import dev.forkhandles.result4k.peekFailure
