@@ -21,6 +21,7 @@ dependencies {
     testImplementation(libs.kotest.assertions.core.jvm)
 
     testRuntimeOnly(libs.junit.jupiter)
+    testRuntimeOnly(libs.slf4j.simple)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
