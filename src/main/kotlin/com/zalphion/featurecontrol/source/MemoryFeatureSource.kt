@@ -21,6 +21,4 @@ fun FeatureSource.Companion.memory(flags: Features) = memory { flags.asSuccess()
  */
 fun FeatureSource.Companion.memory(bundleFn: () -> Result4k<Features, String>) = object: FeatureSource {
     override fun get() = bundleFn()
-    override val readyFuture: CompletableFuture<FeatureSource> = CompletableFuture.completedFuture(this)
-    override fun close() {}
 }

@@ -42,7 +42,7 @@ public class JavaTest {
                         Map.of("treats-doctrine", (recipient) -> doctrine),
                         Map.of()
                     )
-            ).uncached()
+            )
     );
 
     @Test

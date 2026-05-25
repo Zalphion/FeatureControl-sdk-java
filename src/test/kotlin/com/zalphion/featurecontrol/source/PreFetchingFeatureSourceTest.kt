@@ -5,13 +5,11 @@ import com.zalphion.featurecontrol.stringProperty
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asSuccess
-import dev.forkhandles.result4k.kotest.shouldBeFailure
 import dev.forkhandles.result4k.kotest.shouldBeSuccess
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import dev.forkhandles.time.DeterministicScheduler
 import java.time.Duration
-import java.util.concurrent.CompletableFuture
 
 private fun buildFeatures(propValue: String) = Features(
     properties = mapOf("prop" to { propValue }),
@@ -33,39 +31,8 @@ class PreFetchingFeatureSourceTest {
     private val property = source.stringProperty("prop", default = "default")
 
     @Test
-    fun `ready after fetch`() {
-        source.readyFuture.isDone shouldBe false
-        source.get() shouldBeFailure "FeatureSource is not yet ready"
-
-        scheduler.tick(Duration.ZERO)
-        source.readyFuture.isDone shouldBe true
-        source.get().shouldBeSuccess()
-    }
-
-    @Test
-    fun `not ready if underlying isn't ready`() {
-        val future = CompletableFuture<FeatureSource>()
-        val flags = object: FeatureSource {
-            override fun get() = nextResult.also { invocations++ }
-            override fun close() {}
-            override val readyFuture: CompletableFuture<FeatureSource> = future
-        }.preFetching(scheduler = scheduler)
-
-        scheduler.tick(Duration.ZERO)
-        flags.readyFuture.isDone shouldBe false
-
-        scheduler.tick(Duration.ofMinutes(10))
-        flags.readyFuture.isDone shouldBe false
-
-        future.complete(flags)
-        scheduler.tick(Duration.ofMinutes(1))
-        flags.readyFuture.isDone shouldBe true
-    }
-
-    @Test
     fun `caches bundle`() {
         scheduler.tick(Duration.ZERO)
-        source.readyFuture.get()
 
         source.get().shouldBeSuccess()
         source.get().shouldBeSuccess()
@@ -75,7 +42,6 @@ class PreFetchingFeatureSourceTest {
     @Test
     fun `refreshes after delay`() {
         scheduler.tick(Duration.ZERO)
-        source.readyFuture.isDone shouldBe true
 
         property.get().also { invocations shouldBe 1 } shouldBe "foo"
 
@@ -90,10 +56,12 @@ class PreFetchingFeatureSourceTest {
     }
 
     @Test
-    fun `not ready if getBundle fails`() {
+    fun `can gracefully handle a failing bundle`() {
         nextResult = "foo".asFailure()
         scheduler.tick(Duration.ZERO)
-        source.readyFuture.isDone shouldBe false
+        invocations shouldBe 1
+
+        property.get() shouldBe "default"
     }
 
     @Test
@@ -101,17 +69,17 @@ class PreFetchingFeatureSourceTest {
         nextResult = "foo".asFailure()
 
         scheduler.tick(Duration.ZERO)
-        source.readyFuture.isDone shouldBe false
+        property.get() shouldBe "default"
         invocations shouldBe 1
 
         scheduler.tick(Duration.ofSeconds(1))
-        source.readyFuture.isDone shouldBe false
+        property.get() shouldBe "default"
         invocations shouldBe 2
 
         nextResult = buildFeatures("foo").asSuccess()
 
         scheduler.tick(Duration.ofSeconds(1))
-        source.readyFuture.isDone shouldBe true
+        property.get() shouldBe "foo"
         invocations shouldBe 3
     }
 
@@ -137,11 +105,15 @@ class PreFetchingFeatureSourceTest {
     }
 
     @Test
-    fun `fails if closed`() {
+    fun `close source`() {
         scheduler.tick(Duration.ZERO)
-        source.readyFuture.get()
+        property.get() shouldBe "foo"
 
         source.close()
-        source.get() shouldBeFailure "FeatureSource is closed"
+        property.get() shouldBe "foo"
+
+        nextResult = buildFeatures("bar").asSuccess()
+        scheduler.tick(Duration.ofMinutes(5))
+        property.get() shouldBe "foo"
     }
 }

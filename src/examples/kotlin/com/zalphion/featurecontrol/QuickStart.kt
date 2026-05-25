@@ -1,9 +1,8 @@
 package com.zalphion.featurecontrol
 
 import com.zalphion.featurecontrol.client.FeatureControl
-import com.zalphion.featurecontrol.source.FeatureSource
-import com.zalphion.featurecontrol.source.http
 import com.zalphion.featurecontrol.source.preFetching
+import com.zalphion.featurecontrol.source.toFeatureSource
 
 fun main() {
     /*
@@ -13,8 +12,8 @@ fun main() {
      * Fetching occurs in the background, but you can block on the `FeatureSource` for readiness.
      * This is not recommended for production servers, as it may stall the application.
      */
-    val features = FeatureSource
-        .http(FeatureControl.northAmerica, System.getenv("FEATURE_CONTROL_SDK_KEY"))
+    val features = FeatureControl.northAmerica
+        .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
         .preFetching()
 
     /*

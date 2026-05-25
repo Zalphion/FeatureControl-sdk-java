@@ -21,7 +21,7 @@ fun FeatureSource.preFetching(
     refreshInternal: Duration = Duration.ofMinutes(1),
     retryInterval: Duration = Duration.ofSeconds(1),
     scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(),
-) = object: FeatureSource {
+) = object: CloseableFeatureSource {
     private val logger = LoggerFactory.getLogger(FeatureSource::class.java)
     private val inner = this@preFetching
     private val cache = AtomicReference<Features>()
@@ -53,26 +53,10 @@ fun FeatureSource.preFetching(
     }
 
     init {
-        inner.readyFuture.whenComplete { _: FeatureSource?, throwable: Throwable? ->
-            if (throwable == null) {
-                scheduler.scheduleWithFixedDelay(::fetchNow, 0, refreshInternal.toMillis(), TimeUnit.MILLISECONDS)
-            } else {
-                firstFetchFuture.completeExceptionally(throwable)
-            }
-        }
+        scheduler.scheduleWithFixedDelay(::fetchNow, 0, refreshInternal.toMillis(), TimeUnit.MILLISECONDS)
     }
 
-    override fun get() = when {
-        scheduler.isShutdown -> "${FeatureSource::class.simpleName} is closed".asFailure()
-        !readyFuture.isDone -> "${FeatureSource::class.simpleName} is not yet ready".asFailure()
-        else -> cache.get().asResultOr { "A bundle has not yet been successfully fetched" }
-    }
+    override fun get() = cache.get().asResultOr { "A bundle has not yet been successfully fetched" }
 
-    override fun close() {
-        scheduler.shutdown()
-        inner.close()
-    }
-
-    override val readyFuture: CompletableFuture<FeatureSource> =
-        inner.readyFuture.thenCompose { firstFetchFuture }
+    override fun close() = scheduler.shutdown()
 }

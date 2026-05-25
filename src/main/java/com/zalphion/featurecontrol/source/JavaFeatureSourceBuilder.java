@@ -5,8 +5,6 @@ import com.zalphion.featurecontrol.client.FeatureControl;
 import dev.forkhandles.result4k.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.time.Clock;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.Executors;
@@ -29,19 +27,18 @@ public class JavaFeatureSourceBuilder {
             @NotNull String sdkKey
     ) {
         return new JavaFeatureSourceBuilder(
-                HttpFeatureSourceKt.http(
-                        FeatureSource.Companion,
+                HttpFeatureSourceKt.toFeatureSource(
                         Objects.requireNonNull(client, "client is required"),
                         Objects.requireNonNull(sdkKey, "sdkKey is required")
                 )
         );
     }
 
-    public static @NotNull JavaFeatureSourceBuilder memory(
+    public static @NotNull JavaFeatureSource memory(
             @NotNull Features features
     ) {
         Objects.requireNonNull(features, "features is required");
-        return new JavaFeatureSourceBuilder(
+        return new JavaFeatureSource(
                 MemoryFeatureSourceKt.memory(
                         FeatureSource.Companion,
                         features
@@ -61,12 +58,16 @@ public class JavaFeatureSourceBuilder {
         );
     }
 
-    public @NotNull JavaFeatureSource preFetching(
+    /**
+     * Fetch features in the background to not block execution.
+     * Prefer this method over blocking() unless the application is short-lived.
+     */
+    public @NotNull JavaCloseableFeatureSource preFetching(
             @Nullable Duration refreshInterval,
             @Nullable Duration retryInterval,
             @Nullable ScheduledExecutorService scheduler
     ) {
-        return new JavaFeatureSource(
+        return new JavaCloseableFeatureSource(
                 PreFetchingFeatureSourceKt.preFetching(
                         source,
                         refreshInterval == null ? Duration.ofMinutes(1) : refreshInterval,
@@ -76,20 +77,11 @@ public class JavaFeatureSourceBuilder {
         );
     }
 
-    public @NotNull JavaFeatureSource caching(
-            @Nullable Duration ttl,
-            @Nullable Clock clock
-    ) {
-        return new JavaFeatureSource(
-                CachingFeatureSourceKt.caching(
-                        source,
-                        ttl == null ? Duration.ofMinutes(1) : ttl,
-                        clock == null ? Clock.systemUTC() : clock
-                )
-        );
-    }
-
-    public @NotNull JavaFeatureSource uncached() {
+    /**
+     * If cached features are expired, the thread will block until they are retrieved.
+     * Use this only for short-lived applications.
+     */
+    public @NotNull JavaFeatureSource blocking() {
         return new JavaFeatureSource(source);
     }
 }

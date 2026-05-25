@@ -13,6 +13,7 @@ dependencies {
 
     implementation(libs.slf4j.api)
     implementation(libs.kotlin.serialization)
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.forkhandles.result4k.kotest)

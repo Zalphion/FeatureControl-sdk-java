@@ -5,11 +5,9 @@ import com.zalphion.featurecontrol.toFeatures
 import dev.forkhandles.result4k.asFailure
 import dev.forkhandles.result4k.asResultOr
 import dev.forkhandles.result4k.map
-import dev.forkhandles.result4k.recover
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import java.util.concurrent.CompletableFuture
 
 /**
  * Useful for testing.  Read the bundle from a JSON file on the classpath.
@@ -31,11 +29,4 @@ fun FeatureSource.Companion.classpath(
     }
 
     override fun get() = bundle
-    override fun close() {}
-
-    override val readyFuture: CompletableFuture<FeatureSource> = bundle
-        .map { CompletableFuture.completedFuture<FeatureSource>(this) }
-        .recover { CompletableFuture<FeatureSource>().apply {
-            completeExceptionally(IllegalStateException(it))
-        } }
 }
