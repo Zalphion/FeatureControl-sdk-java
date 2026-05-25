@@ -10,6 +10,7 @@ import java.net.InetSocketAddress
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 
 internal class FakeServer(
@@ -18,7 +19,7 @@ internal class FakeServer(
 ) {
 
     private val httpDateFormatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC)
-    private val responses = mutableListOf<Pair<String, Int>>()
+    private val responses = CopyOnWriteArrayList<Pair<String, Int>>()
     fun getResponses() = responses.toList()
 
     private val server = HttpServer.create(InetSocketAddress(0), 1000).apply {
@@ -46,8 +47,8 @@ internal class FakeServer(
         exchange.responseHeaders.set("Date", httpDateFormatter.format(clock()))
 
         val bundle = bundles.find { it.first == sdkKey }?.second ?: run {
-            exchange.sendResponseHeaders(401, -1)
             responses += sdkKey.orEmpty() to 401
+            exchange.sendResponseHeaders(401, -1)
             return
         }
 
@@ -55,16 +56,17 @@ internal class FakeServer(
         exchange.responseHeaders.set("ETag", eTag)
 
         if (eTag == ifNoneMatch) {
-            exchange.sendResponseHeaders(304, -1)
             responses += sdkKey.orEmpty() to 304
+            exchange.sendResponseHeaders(304, -1)
+
             return
         }
 
         // length of 0 to indicate chunked transfer encoding
+        responses += sdkKey.orEmpty() to 200
         exchange.sendResponseHeaders(200, 0)
         exchange.responseBody.use {
             Json.encodeToStream(FeatureBundle.serializer(), bundle, it)
         }
-        responses += sdkKey.orEmpty() to 200
     }
 }
