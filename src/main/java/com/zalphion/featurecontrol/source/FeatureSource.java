@@ -1,0 +1,105 @@
+package com.zalphion.featurecontrol.source;
+
+import com.zalphion.featurecontrol.FeatureFlag;
+import com.zalphion.featurecontrol.ApplicationProperty;
+import com.zalphion.featurecontrol.bundle.FeatureBundle;
+import com.zalphion.featurecontrol.lib.result.Failure;
+import com.zalphion.featurecontrol.lib.result.Result;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+@Slf4j
+public abstract class FeatureSource {
+
+    protected abstract @NonNull @lombok.NonNull Result<FeatureBundle> getInternal() throws Exception;
+
+    public @NonNull @lombok.NonNull Result<FeatureBundle> get() {
+        try {
+            return getInternal();
+        } catch (Exception e) {
+            return new Failure<>(Optional.ofNullable(e.getMessage()).orElse("Unknown error"));
+        }
+    }
+
+    /*
+     * Properties
+     */
+
+    public <T> @NonNull ApplicationProperty<T> property(
+            @NonNull @lombok.NonNull String name,
+            @NonNull @lombok.NonNull Function<@NonNull @lombok.NonNull String, @lombok.NonNull @NonNull T> parseValue,
+            @NonNull @lombok.NonNull Supplier<@NonNull T> defaultValue
+    ) {
+        return () -> get()
+                .flatMap(source -> Result.successOr(source.getProperties().get(name), () -> "Property '" + name + "' not found in source"))
+                .map(parseValue)
+                .peekFailure(log::trace)
+                .recover(err -> defaultValue.get());
+    }
+
+    public <T> @NonNull ApplicationProperty<T> property(
+            @NonNull @lombok.NonNull String name,
+            @NonNull @lombok.NonNull Function<@NonNull @lombok.NonNull String, @lombok.NonNull @NonNull T> parseValue,
+            @NonNull @lombok.NonNull T defaultValue
+    ) {
+        return property(name, parseValue, (Supplier<T>) () -> defaultValue);
+    }
+
+    public @NonNull ApplicationProperty<String> stringProperty(
+            @NonNull @lombok.NonNull String name,
+            @NonNull @lombok.NonNull Supplier<String> defaultValue
+    ) {
+        return property(name, Function.identity(), defaultValue);
+    }
+
+    public @NonNull ApplicationProperty<String> string(
+            @NonNull @lombok.NonNull String name,
+            @NonNull @lombok.NonNull String defaultValue
+    ) {
+        return stringProperty(name, () -> defaultValue);
+    }
+
+    /*
+     * Flags
+     */
+
+    public @NonNull FeatureFlag flag(
+            @NonNull @lombok.NonNull String name,
+            @NonNull @lombok.NonNull String defaultVariant
+    ) {
+        return flag(name, recipient -> defaultVariant);
+    }
+
+    public @NonNull FeatureFlag flag(
+            @NonNull @lombok.NonNull String name,
+            @NonNull @lombok.NonNull Function<@NonNull @lombok.NonNull String, @NonNull @lombok.NonNull String> getDefaultVariant
+    ) {
+        return recipient -> get()
+                .flatMap(source -> Result.successOr(source.getFlags().get(name), () -> "Flag '" + name + "' not found in source"))
+                .flatMap(flag -> flag.evaluate(recipient, getDefaultVariant))
+                .peekFailure(log::trace)
+                .recover(getDefaultVariant);
+    }
+
+    /*
+     * Pre-fetching
+     */
+
+    public @NonNull FeatureSource preFetching() {
+        return new PreFetchingFeatureSource(this);
+    }
+
+    public @NonNull FeatureSource preFetching(
+            @NonNull @lombok.NonNull Duration refreshInterval,
+            @NonNull @lombok.NonNull Duration retryInterval,
+            @NonNull @lombok.NonNull ScheduledExecutorService scheduler
+    ) {
+        return new PreFetchingFeatureSource(this, refreshInterval, retryInterval, scheduler);
+    }
+}

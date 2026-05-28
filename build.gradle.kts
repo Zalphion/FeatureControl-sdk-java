@@ -1,7 +1,14 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.maven.publish)
+    java
+    alias(libs.plugins.lombok)
+    alias(libs.plugins.shadow)
+//    alias(libs.plugins.maven.publish)
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
 }
 
 repositories {
@@ -9,37 +16,25 @@ repositories {
 }
 
 dependencies {
-    api(libs.forkhandles.result4k)
-
+    compileOnly(libs.jspecify)
+    implementation(libs.argo)
     implementation(libs.slf4j.api)
-    implementation(libs.kotlin.serialization)
-    implementation(libs.okhttp)
 
     testImplementation(libs.junit.jupiter.api)
-    testImplementation(libs.forkhandles.result4k.kotest)
     testImplementation(libs.forkhandles.time4k)
-    testImplementation(libs.kotest.assertions.core.jvm)
+    testImplementation("org.hamcrest:java-hamcrest:2.0.0.0")
 
     testRuntimeOnly(libs.junit.jupiter)
     testRuntimeOnly(libs.slf4j.simple)
-    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
-kotlin {
-    jvmToolchain(17)
-    compilerOptions {
-        allWarningsAsErrors = true
-    }
-}
-
-tasks.test {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
 
 sourceSets {
     create("examples") {
         java.srcDirs("src/examples/java")
-        kotlin.srcDirs("src/examples/kotlin")
         compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
         runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
     }
@@ -48,4 +43,9 @@ sourceSets {
 val examplesImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
     extendsFrom(configurations.testImplementation.get())
+}
+
+tasks.shadowJar {
+    // replace unshaded jar
+    archiveClassifier.set("")
 }
