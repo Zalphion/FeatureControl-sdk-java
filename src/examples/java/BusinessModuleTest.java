@@ -1,5 +1,5 @@
-package com.zalphion.featurecontrol;
-
+import com.zalphion.featurecontrol.ApplicationProperty;
+import com.zalphion.featurecontrol.FeatureFlag;
 import org.junit.jupiter.api.Test;
 import lombok.val;
 import static org.assertj.core.api.Assertions.assertThat;

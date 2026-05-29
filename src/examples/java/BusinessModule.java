@@ -1,5 +1,5 @@
-package com.zalphion.featurecontrol;
-
+import com.zalphion.featurecontrol.ApplicationProperty;
+import com.zalphion.featurecontrol.FeatureFlag;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.val;

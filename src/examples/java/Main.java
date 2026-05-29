@@ -1,5 +1,4 @@
-package com.zalphion.featurecontrol;
-
+import com.zalphion.featurecontrol.FeatureControl;
 import com.zalphion.featurecontrol.source.ApplicationSource;
 
 import java.net.URI;
