@@ -2,15 +2,19 @@
 
 # FeatureControl-sdk-java
 
-> [!WARNING]
-> Work in progress
-
 Official Java SDK for the Feature Control Platform.
 
 ## Requirements
 
 - Java 8+
 - slf4j-api: 1.4.3+
+
+## Installation
+
+[![Maven Central Version](https://img.shields.io/maven-central/v/com.zalphion/FeatureControl-sdk-java)](https://central.sonatype.com/artifact/com.zalphion/hFeatureControl-sdk-java)
+
+> [!WARNING]
+> Work in progress
 
 ## Quickstart
 
