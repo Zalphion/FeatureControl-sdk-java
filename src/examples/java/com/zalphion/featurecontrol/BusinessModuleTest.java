@@ -1,8 +1,8 @@
 package com.zalphion.featurecontrol;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import lombok.val;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,10 +24,36 @@ public class BusinessModuleTest {
             .build();
 
     @Test
-    public void dashboardEnabledForBetaUser() {
+    public void dashboardEnabled_forBetaUser() {
         val html = module.renderIndex("admin");
-
+        assertThat(html).contains("Go to Dashboard");
     }
 
+    @Test
+    public void dashboardDisabled_forEveryoneElse() {
+        val html = module.renderIndex("user1");
+        assertThat(html).doesNotContain("Go to Dashboard");
+    }
+
+
+    @Test
+    public void dashboardEnabled_forEveryone() {
+        dashboardEnabled = true;
+        val html = module.renderIndex("user1");
+        assertThat(html).contains("Go to Dashboard");
+    }
+
+    @Test
+    public void excitementLevel_default() {
+        val html = module.renderIndex("user1");
+        assertThat(html).contains("This is the homepage!");
+    }
+
+    @Test
+    public void excitementLevel_excessive() {
+        excitementLevel = 3;
+        val html = module.renderIndex("user1");
+        assertThat(html).contains("This is the homepage!!!");
+    }
 }
 

@@ -18,9 +18,9 @@ import java.util.zip.CRC32;
 
 @Data
 @Builder
-public class FlagBundle {
+public class FlagDefinition {
     private final @Singular @NonNull Map<@NonNull String, @NonNull String> overrides;
-    private final @Singular @NonNull List<@NonNull VariantBucket> buckets;
+    private final @Singular @NonNull List<@NonNull VariantDefinition> buckets;
     private final @NonNull String saltBase64;
 
     public Result<String> evaluate(

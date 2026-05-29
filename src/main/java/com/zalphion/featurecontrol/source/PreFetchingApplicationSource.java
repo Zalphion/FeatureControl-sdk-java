@@ -1,6 +1,6 @@
 package com.zalphion.featurecontrol.source;
 
-import com.zalphion.featurecontrol.bundle.FeatureBundle;
+import com.zalphion.featurecontrol.bundle.ApplicationBundle;
 import com.zalphion.featurecontrol.lib.result.Result;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -13,33 +13,33 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
-public class PreFetchingFeatureSource extends FeatureSource implements AutoCloseable {
-    private final @lombok.NonNull FeatureSource inner;
+public class PreFetchingApplicationSource extends ApplicationSource implements AutoCloseable {
+    private final @lombok.NonNull ApplicationSource inner;
     private final @lombok.NonNull Duration retryInterval;
     private final @lombok.NonNull ScheduledExecutorService scheduler;
 
     // FIXME don't include in lombok
-    private final AtomicReference<FeatureBundle> cache = new AtomicReference<>();
+    private final AtomicReference<ApplicationBundle> cache = new AtomicReference<>();
 
-    public PreFetchingFeatureSource(@NonNull @lombok.NonNull FeatureSource inner) {
+    public PreFetchingApplicationSource(@NonNull @lombok.NonNull ApplicationSource inner) {
         this(inner, Duration.ofSeconds(10), Duration.ofSeconds(1), Executors.newSingleThreadScheduledExecutor());
     }
 
-    public PreFetchingFeatureSource(
-            @NonNull @lombok.NonNull FeatureSource inner,
+    public PreFetchingApplicationSource(
+            @NonNull @lombok.NonNull ApplicationSource inner,
             @NonNull @lombok.NonNull Duration refreshInterval,
             @NonNull @lombok.NonNull Duration retryInterval,
             @NonNull @lombok.NonNull ScheduledExecutorService scheduler
     ) {
         this.inner = inner;
         this.retryInterval = retryInterval;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
+        this.scheduler = scheduler;
 
         scheduler.scheduleWithFixedDelay(this::fetchNow, 0, refreshInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
-    protected @NonNull @lombok.NonNull Result<FeatureBundle> getInternal() {
+    protected @NonNull @lombok.NonNull Result<ApplicationBundle> getInternal() {
         return Result.successOr(cache.get(), () -> "A bundle has not yet been successfully fetched");
     }
 

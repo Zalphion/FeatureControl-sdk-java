@@ -1,4 +1,4 @@
-package com.zalphion.featurecontrol;
+package com.zalphion.featurecontrol.lib;
 
 import lombok.val;
 import org.jspecify.annotations.NonNull;

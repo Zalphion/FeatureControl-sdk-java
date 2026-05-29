@@ -1,6 +1,6 @@
 /*
  * Portions derived from Http4k
- * Copyright 2021 Http4k Authors
+ * Copyright 2026 Http4k Authors
  * Modifications Copyright 2026 Zalphion Systems Inc.
  *
  * Licensed under the Apache License, Version 2.0.
@@ -11,7 +11,8 @@
 
 package com.zalphion.featurecontrol.lib.http;
 
-import com.zalphion.featurecontrol.BinaryUtils;
+import com.zalphion.featurecontrol.lib.BinaryUtils;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.jspecify.annotations.NonNull;
 import lombok.val;
@@ -24,12 +25,18 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Using the java 8 HttpURLConnection rather than include a dependency.
+ * The HttpUrlConnection is the most portable HTTP client implementation available in the JDK.
+ * But due to its low-level nature, its usage here isn't fully robust.
+ * You should consider a more modern implementation, such as sdk-okhttp5.
  */
-@Builder
+@AllArgsConstructor
 public class HttpUrlConnectionHttpFunction implements HttpFunction {
-    private final @Builder.Default @lombok.NonNull Duration readTimeout = Duration.ofSeconds(10);
-    private final @Builder.Default @lombok.NonNull Duration connectTimeout = Duration.ofSeconds(10);
+    private final @NonNull Duration readTimeout;
+    private final @NonNull Duration connectTimeout;
+
+    public HttpUrlConnectionHttpFunction() {
+        this(Duration.ofSeconds(10), Duration.ofSeconds(10));
+    }
 
     private static final int CHUNK_SIZE = 8192;
 

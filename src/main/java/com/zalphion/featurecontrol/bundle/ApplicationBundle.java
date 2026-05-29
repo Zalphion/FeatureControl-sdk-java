@@ -1,7 +1,7 @@
 package com.zalphion.featurecontrol.bundle;
 
-import com.zalphion.featurecontrol.BinaryUtils;
-import com.zalphion.featurecontrol.source.FeatureSource;
+import com.zalphion.featurecontrol.lib.BinaryUtils;
+import com.zalphion.featurecontrol.source.ApplicationSource;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;
@@ -14,15 +14,15 @@ import java.util.Map;
 
 @Data
 @Builder
-public class FeatureBundle {
+public class ApplicationBundle {
     private final @Singular @NonNull Map<@NonNull String, String> properties;
-    private final @Singular Map<@NonNull @lombok.NonNull String, FlagBundle> flags;
+    private final @Singular Map<@NonNull @lombok.NonNull String, FlagDefinition> flags;
 
-    public @NonNull FeatureSource toSource() {
-        return FeatureSource.create(this);
+    public @NonNull ApplicationSource toSource() {
+        return ApplicationSource.create(this);
     }
 
-    public static @NonNull FeatureBundle fromClasspath(
+    public static @NonNull ApplicationBundle fromClasspath(
             @NonNull @lombok.NonNull String absolutePath,
             @NonNull @lombok.NonNull ClassLoader classLoader
     ) throws IOException {
@@ -30,11 +30,11 @@ public class FeatureBundle {
             if (stream == null) throw new IllegalArgumentException("Could not find bundle at " + absolutePath);
             val json = new String(BinaryUtils.readFully(stream), StandardCharsets.UTF_8);
 
-            return FeatureBundleSerializer.fromJson(json).orElseThrow(IOException::new);
+            return ApplicationBundleJson.fromJson(json).orElseThrow(IOException::new);
         }
     }
 
-    public static @NonNull FeatureBundle fromClasspath(
+    public static @NonNull ApplicationBundle fromClasspath(
             @NonNull @lombok.NonNull String absolutePath
     ) throws IOException {
         return fromClasspath(absolutePath, Thread.currentThread().getContextClassLoader());

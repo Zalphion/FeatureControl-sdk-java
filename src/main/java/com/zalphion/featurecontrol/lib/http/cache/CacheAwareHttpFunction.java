@@ -10,11 +10,11 @@ import org.jspecify.annotations.NonNull;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Caching layer that respects the server's cache control and eTag headers;
@@ -29,10 +29,10 @@ public class CacheAwareHttpFunction implements HttpFunction {
     private static final Duration DEFAULT_MAX_AGE = Duration.ofMinutes(1);
 
     private final @lombok.NonNull HttpFunction delegate;
-    private final @lombok.NonNull Clock clock;
+    private final @lombok.NonNull Supplier<Instant> clock;
 
     public CacheAwareHttpFunction(HttpFunction delegate) {
-        this(delegate, Clock.systemUTC());
+        this(delegate, Instant::now);
     }
 
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
@@ -44,18 +44,18 @@ public class CacheAwareHttpFunction implements HttpFunction {
             return delegate.exchange(request);
         }
 
-        val cached = cache.computeIfAbsent(cacheKey(request), key -> new CacheEntry(clock.instant(), DEFAULT_MAX_AGE));
+        val cached = cache.computeIfAbsent(cacheKey(request), key -> new CacheEntry(clock.get(), DEFAULT_MAX_AGE));
 
         // optimistic cache lookup
         {
-            if (cached.getResponse() != null && cached.isExpired(clock.instant())) {
+            if (cached.getResponse() != null && cached.isNotExpired(clock.get())) {
                 return cached.getResponse();
             }
         }
 
         synchronized (cached) {
             // secondary cache lookup after blocking on the lock
-            if (cached.getResponse() != null && cached.isExpired(clock.instant())) {
+            if (cached.getResponse() != null && cached.isNotExpired(clock.get())) {
                 return cached.getResponse();
             }
 
@@ -73,7 +73,7 @@ public class CacheAwareHttpFunction implements HttpFunction {
             // TODO only cache when cache-control header is present
 
             // update cache data
-            cached.setUpdatedAt(clock.instant());
+            cached.setUpdatedAt(clock.get());
             if (response.getStatusCode() == OK) cached.setResponse(response);
             CacheControl.from(response).ifPresent(cacheControl -> {
                 cached.setMaxAge(cacheControl.getMaxAge());
@@ -81,7 +81,7 @@ public class CacheAwareHttpFunction implements HttpFunction {
             });
 
             // prune cache
-            val now = clock.instant();
+            val now = clock.get();
             for (val entry : cache.entrySet()) {
                 if (entry.getValue().shouldPurge(now)) {
                     synchronized (entry.getValue()) {
@@ -122,8 +122,8 @@ public class CacheAwareHttpFunction implements HttpFunction {
         private @Setter @Getter HttpResponse response;
         private @Setter @Getter String eTag;
 
-        public boolean isExpired(Instant now) {
-            return updatedAt.plus(maxAge).isBefore(now);
+        public boolean isNotExpired(Instant now) {
+            return updatedAt.plus(maxAge).isAfter(now);
         }
 
         public boolean shouldPurge(Instant now) {

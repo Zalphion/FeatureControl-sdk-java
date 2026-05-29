@@ -1,77 +1,111 @@
 package com.zalphion.featurecontrol.source;
 
-import com.zalphion.featurecontrol.bundle.FeatureBundle;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Singular;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+import com.zalphion.featurecontrol.bundle.ApplicationBundle;
+import com.zalphion.featurecontrol.bundle.ApplicationBundleJson;
+import lombok.Getter;
+import org.jspecify.annotations.NonNull;
+import lombok.val;
 
-import java.time.Clock;
-import java.util.Map;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
-@Builder
 public class FakeServer {
-    private final @NonNull Clock clock;
-    private final @Singular @NonNull Map<String, FeatureBundle> bundles;
+    private static final int EMPTY_BODY_LENGTH = -1;
 
-}
+    private final DateTimeFormatter httpDateFormatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
+    private final @Getter List<Map.Entry<String, Integer>> responses = new CopyOnWriteArrayList<>();
+    private final Map<String, ApplicationBundle> bundles = new ConcurrentHashMap<>();
 
+    private final @NonNull AtomicReference<Instant> clock;
+    private final @NonNull @Getter Duration maxAge;
+    private final @NonNull HttpServer server;
 
-/*
-internal class FakeServer(
-    private vararg val bundles: Pair<String, FeatureBundle>,
-    private val clock: () -> Instant
-) {
+    public FakeServer(
+            @NonNull @lombok.NonNull AtomicReference<Instant> clock,
+            @NonNull @lombok.NonNull Duration maxAge
+    ) {
+        this.clock = clock;
+        this.maxAge = maxAge;
 
-    private val httpDateFormatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC)
-    private val responses = CopyOnWriteArrayList<Pair<String, Int>>()
-    fun getResponses() = responses.toList()
+        try {
+            this.server = HttpServer.create(new InetSocketAddress(0), 0);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create HTTP server", e);
+        }
 
-    private val server = HttpServer.create(InetSocketAddress(0), 1000).apply {
-        createContext("/") { exchange ->
-            if (exchange.requestMethod == "GET" && exchange.requestURI.path == "/sdkapi/v1/bundle") {
-                getBundle(exchange)
+        server.createContext("/", exchange -> {
+            if (exchange.getRequestMethod().equals("GET") && exchange.getRequestURI().getPath().equals("/sdkapi/v1/bundle")) {
+                getBundle(exchange);
             } else {
-                exchange.sendResponseHeaders(404, -1)
+                exchange.sendResponseHeaders(404, EMPTY_BODY_LENGTH);
             }
-        }
-        executor = Executors.newSingleThreadExecutor()
+        });
     }
 
-    fun start(): Int {
-        server.start()
-        return server.address.port
+    public FakeServer withBundle(String sdkKey, ApplicationBundle bundle) {
+        bundles.put(sdkKey, bundle);
+        return this;
     }
-    fun stop() = server.stop(0)
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun getBundle(exchange: HttpExchange) {
-        val ifNoneMatch = exchange.requestHeaders["If-None-Match"]?.firstOrNull()
-        val sdkKey = exchange.requestHeaders["Authorization"]?.firstOrNull()?.split(" ")?.last()
+    public int start() {
+        server.start();
+        return server.getAddress().getPort();
+    }
 
-        exchange.responseHeaders.set("Date", httpDateFormatter.format(clock()))
+    public void stop() {
+        server.stop(0);
+    }
 
-        val bundle = bundles.find { it.first == sdkKey }?.second ?: run {
-            responses += sdkKey.orEmpty() to 401
-            exchange.sendResponseHeaders(401, -1)
-            return
+    private void getBundle(@NonNull @lombok.NonNull HttpExchange exchange) throws IOException {
+        exchange.getResponseHeaders().set("Date", httpDateFormatter.format(clock.get()));
+
+        val ifNoneMatch = Optional.ofNullable(exchange.getRequestHeaders().get("If-None-Match"))
+                .orElseGet(Collections::emptyList)
+                .stream().findFirst().orElse(null);
+
+        val sdkKey = Optional.ofNullable(exchange.getRequestHeaders().get("Authorization"))
+                .orElseGet(Collections::emptyList)
+                .stream().findFirst().map(value -> value.substring(value.indexOf(' ') + 1))
+                .orElse("");
+
+        val bundle = bundles.entrySet().stream()
+                .filter(entry -> entry.getKey().equals(sdkKey))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+
+        if (bundle == null) {
+            responses.add(new AbstractMap.SimpleEntry<>(sdkKey, 401));
+            exchange.sendResponseHeaders(401, EMPTY_BODY_LENGTH);
+            return;
         }
 
-        val eTag = "W/\"${bundle.hashCode()}\""
-        exchange.responseHeaders.set("ETag", eTag)
+        val eTag = "W/\"" + bundle.hashCode() + "\"";
+        exchange.getResponseHeaders().set("ETag", eTag);
+        exchange.getResponseHeaders().set("Cache-Control", "max-age=" + maxAge.getSeconds());
 
-        if (eTag == ifNoneMatch) {
-            responses += sdkKey.orEmpty() to 304
-            exchange.sendResponseHeaders(304, -1)
-
-            return
+        if (eTag.equals(ifNoneMatch)) {
+            responses.add(new AbstractMap.SimpleEntry<>(sdkKey, 304));
+            exchange.sendResponseHeaders(304, EMPTY_BODY_LENGTH);
+            return;
         }
 
-        // length of 0 to indicate chunked transfer encoding
-        responses += sdkKey.orEmpty() to 200
-        exchange.sendResponseHeaders(200, 0)
-        exchange.responseBody.use {
-            Json.encodeToStream(FeatureBundle.serializer(), bundle, it)
+        responses.add(new AbstractMap.SimpleEntry<>(sdkKey, 200));
+        val jsonBinary = ApplicationBundleJson.toJson(bundle).getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(200, jsonBinary.length);
+        try (val out = exchange.getResponseBody()) {
+            out.write(jsonBinary);
         }
     }
 }
- */

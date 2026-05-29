@@ -1,7 +1,7 @@
 package com.zalphion.featurecontrol;
 
 import com.zalphion.featurecontrol.lib.result.Failure;
-import com.zalphion.featurecontrol.source.FeatureSource;
+import com.zalphion.featurecontrol.source.ApplicationSource;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.*;
 import lombok.val;
@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationPropertyTest {
 
-    private final FeatureSource source = TestFixtures.bundle1.toSource();
+    private final ApplicationSource source = TestFixtures.bundle1.toSource();
 
     @Test
     public void missingProperty() {
@@ -43,7 +43,7 @@ public class ApplicationPropertyTest {
 
     @Test
     public void getValue_sourceFailure() {
-        val source = FeatureSource.create(new Failure<>("foo"));
+        val source = ApplicationSource.createWithResult(new Failure<>("foo"));
         assertThat(source.stringProperty("str", "default").getValue())
                 .isEqualTo("default");
     }

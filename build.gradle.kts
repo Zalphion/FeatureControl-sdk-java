@@ -21,15 +21,18 @@ dependencies {
     implementation(libs.argo)
     implementation(libs.slf4j.api)
 
-    testCompileOnly(libs.jspecify)
-
     testImplementation(libs.junit.jupiter.api)
-    testImplementation(libs.forkhandles.time4k)
     testImplementation(libs.assertj)
 
     testRuntimeOnly(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.slf4j.simple)
+}
+
+configurations {
+    testCompileOnly {
+        extendsFrom(configurations.compileOnly.get())
+    }
 }
 
 tasks.withType<Test>().configureEach {
@@ -50,5 +53,22 @@ val examplesImplementation: Configuration by configurations.getting {
 }
 
 tasks.shadowJar {
+    // replace original JAR for maven distribution
+    archiveClassifier.set("")
+
+    // vendor argo, but move to a new package
     relocate("argo", "com.zalphion.featurecontrol.lib.argo")
+
+    // don't vendor slf4j-api
+    dependencies {
+        exclude(dependency("org.slf4j:slf4j-api:.*"))
+    }
+
+    // include project license
+    from(rootProject.file("LICENSE")) {
+        into("")
+    }
+
+    // remove unused vendored code
+    minimize()
 }

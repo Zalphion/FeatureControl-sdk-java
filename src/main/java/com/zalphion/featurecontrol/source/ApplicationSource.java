@@ -2,7 +2,7 @@ package com.zalphion.featurecontrol.source;
 
 import com.zalphion.featurecontrol.FeatureFlag;
 import com.zalphion.featurecontrol.ApplicationProperty;
-import com.zalphion.featurecontrol.bundle.FeatureBundle;
+import com.zalphion.featurecontrol.bundle.ApplicationBundle;
 import com.zalphion.featurecontrol.lib.result.Failure;
 import com.zalphion.featurecontrol.lib.result.Result;
 import com.zalphion.featurecontrol.lib.result.Success;
@@ -16,11 +16,11 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Slf4j
-public abstract class FeatureSource {
+public abstract class ApplicationSource {
 
-    protected abstract @NonNull @lombok.NonNull Result<FeatureBundle> getInternal() throws Exception;
+    protected abstract @NonNull @lombok.NonNull Result<ApplicationBundle> getInternal() throws Exception;
 
-    public @NonNull @lombok.NonNull Result<FeatureBundle> get() {
+    public @NonNull @lombok.NonNull Result<ApplicationBundle> get() {
         try {
             return getInternal();
         } catch (Exception e) {
@@ -32,26 +32,25 @@ public abstract class FeatureSource {
      * Factories
      */
 
-    public static @NonNull FeatureSource create(Result<FeatureBundle> result) {
-        return new FeatureSource() {
+    public static @NonNull ApplicationSource createWithResult(Result<ApplicationBundle> result) {
+        return createWithResult(() -> result);
+    }
+
+    public static @NonNull ApplicationSource createWithResult(Supplier<Result<ApplicationBundle>> supplier) {
+        return new ApplicationSource() {
             @Override
-            protected @NonNull @lombok.NonNull Result<FeatureBundle> getInternal() {
-                return result;
+            protected @NonNull @lombok.NonNull Result<ApplicationBundle> getInternal() {
+                return supplier.get();
             }
         };
     }
 
-    public static @NonNull FeatureSource create(FeatureBundle bundle) {
+    public static @NonNull ApplicationSource create(ApplicationBundle bundle) {
         return create(() -> bundle);
     }
 
-    public static @NonNull FeatureSource create(Supplier<FeatureBundle> supplier) {
-        return new FeatureSource() {
-            @Override
-            protected @NonNull @lombok.NonNull Result<FeatureBundle> getInternal() {
-                return new Success<>(supplier.get());
-            }
-        };
+    public static @NonNull ApplicationSource create(Supplier<ApplicationBundle> supplier) {
+        return createWithResult(() -> new Success<>(supplier.get()));
     }
 
     /*
@@ -118,15 +117,15 @@ public abstract class FeatureSource {
      * Pre-fetching
      */
 
-    public @NonNull FeatureSource preFetching() {
-        return new PreFetchingFeatureSource(this);
+    public @NonNull PreFetchingApplicationSource preFetching() {
+        return new PreFetchingApplicationSource(this);
     }
 
-    public @NonNull FeatureSource preFetching(
+    public @NonNull PreFetchingApplicationSource preFetching(
             @NonNull @lombok.NonNull Duration refreshInterval,
             @NonNull @lombok.NonNull Duration retryInterval,
             @NonNull @lombok.NonNull ScheduledExecutorService scheduler
     ) {
-        return new PreFetchingFeatureSource(this, refreshInterval, retryInterval, scheduler);
+        return new PreFetchingApplicationSource(this, refreshInterval, retryInterval, scheduler);
     }
 }
