@@ -32,7 +32,7 @@ jobs:
           distribution: temurin
 
       - name: Verify Java Version
-        run: ./gradlew help -PtestJavaVersion=${{ matrix.java-test-version }} --info
+        run: ./gradlew --version -PtestJavaVersion=${{ matrix.java-test-version }}
 
       - name: Test
         run: ./gradlew check --no-configuration-cache --info
