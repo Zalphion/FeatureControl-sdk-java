@@ -1,74 +1,35 @@
 plugins {
     java
-    alias(libs.plugins.lombok)
-    alias(libs.plugins.maven.publish)
-    alias(libs.plugins.shadow)
+    `java-test-fixtures`
+    alias(libs.plugins.lombok) apply false
+    alias(libs.plugins.maven.publish) apply false
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
+allprojects {
+    pluginManager.apply("java-test-fixtures")
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
     }
 }
 
-repositories {
-    mavenCentral()
+subprojects {
+    pluginManager.apply("java-library")
+    pluginManager.apply("maven-publish")
+    pluginManager.apply("io.freefair.lombok")
 }
 
 dependencies {
-    compileOnly(libs.jspecify)
-
-    implementation(libs.argo)
-    implementation(libs.slf4j.api)
-
-    testImplementation(libs.junit.jupiter.api)
-    testImplementation(libs.assertj)
-
-    testRuntimeOnly(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    testRuntimeOnly(libs.slf4j.simple)
-}
-
-configurations {
-    testCompileOnly {
-        extendsFrom(configurations.compileOnly.get())
-    }
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-}
-
-sourceSets {
-    create("examples") {
-        java.srcDirs("src/examples/java")
-        compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
-        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
-    }
-}
-
-val examplesImplementation: Configuration by configurations.getting {
-    extendsFrom(configurations.implementation.get())
-    extendsFrom(configurations.testImplementation.get())
-}
-
-tasks.shadowJar {
-    // replace original JAR for maven distribution
-    archiveClassifier.set("")
-
-    // vendor argo, but move to a new package
-    relocate("argo", "com.zalphion.featurecontrol.lib.argo")
-
-    // don't vendor slf4j-api
-    dependencies {
-        exclude(dependency("org.slf4j:slf4j-api:.*"))
-    }
-
-    // include project license
-    from(rootProject.file("LICENSE")) {
-        into("")
-    }
-
-    // remove unused vendored code
-    minimize()
+    implementation(project(":core"))
+    testImplementation(testFixtures(project(":core")))
 }
