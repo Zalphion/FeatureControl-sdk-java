@@ -37,16 +37,6 @@ configurations {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-
-    // run tests against a custom java version
-    val testJavaVersion = providers.gradleProperty("testJavaVersion").map(String::toInt).orNull
-    if (testJavaVersion != null) {
-        javaLauncher.set(
-            javaToolchains.launcherFor {
-                languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
-            }
-        )
-    }
 }
 
 sourceSets {

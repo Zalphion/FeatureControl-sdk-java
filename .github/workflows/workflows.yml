@@ -32,9 +32,6 @@ jobs:
           java-version: ${{ matrix.java-test-version }}
           distribution: temurin
 
-      - name: Verify Java Version
-        run: ./gradlew --version -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} -PtestJavaVersion=${{ matrix.java-test-version }}
-
       - name: Test
         run: ./gradlew check -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
         env:
