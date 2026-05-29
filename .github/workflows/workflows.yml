@@ -30,11 +30,12 @@ jobs:
         with:
           java-version: ${{ matrix.java-test-version }}
           distribution: temurin
-        env:
-          org.gradle.java.home: ${{ steps.testjdk.outputs.path }}
 
       - name: Test
         run: sh ./gradlew check --no-configuration-cache --info
+        env:
+          org.gradle.java.home: ${{ steps.testjdk.outputs.path }}
+
   publish:
     needs: [ test ]
     runs-on: ubuntu-latest
