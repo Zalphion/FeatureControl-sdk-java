@@ -28,7 +28,7 @@ jobs:
           distribution: temurin
 
       - name: Test
-        run: ./gradlew core:check --no-configuration-cache --info
+        run: ./gradlew core:check -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
   testJava11AndOn:
     runs-on: ubuntu-latest
     strategy:
