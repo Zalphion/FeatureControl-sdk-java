@@ -1,18 +1,22 @@
-package com.zalphion.featurecontrol.client
+package com.zalphion.featurecontrol.source;
 
-import com.sun.net.httpserver.HttpExchange
-import com.sun.net.httpserver.HttpServer
-import com.zalphion.featurecontrol.FeatureBundle
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToStream
-import java.net.InetSocketAddress
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.Executors
+import com.zalphion.featurecontrol.bundle.FeatureBundle;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Singular;
 
+import java.time.Clock;
+import java.util.Map;
+
+@Builder
+public class FakeServer {
+    private final @NonNull Clock clock;
+    private final @Singular @NonNull Map<String, FeatureBundle> bundles;
+
+}
+
+
+/*
 internal class FakeServer(
     private vararg val bundles: Pair<String, FeatureBundle>,
     private val clock: () -> Instant
@@ -70,3 +74,4 @@ internal class FakeServer(
         }
     }
 }
+ */

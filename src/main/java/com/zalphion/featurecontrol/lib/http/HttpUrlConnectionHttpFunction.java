@@ -23,6 +23,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Using the java 8 HttpURLConnection rather than include a dependency.
+ */
 @Builder
 public class HttpUrlConnectionHttpFunction implements HttpFunction {
     private final @Builder.Default @lombok.NonNull Duration readTimeout = Duration.ofSeconds(10);

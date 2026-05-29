@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,7 +36,6 @@ public class CacheAwareHttpFunction implements HttpFunction {
     }
 
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
-    private final Map<String, Object> locks = new ConcurrentHashMap<>();
 
     @Override
     public @NonNull @lombok.NonNull HttpResponse exchange(@NonNull @lombok.NonNull HttpRequest request) {
@@ -44,28 +44,24 @@ public class CacheAwareHttpFunction implements HttpFunction {
             return delegate.exchange(request);
         }
 
-        val cacheKey = cacheKey(request);
+        val cached = cache.computeIfAbsent(cacheKey(request), key -> new CacheEntry(clock.instant(), DEFAULT_MAX_AGE));
 
         // optimistic cache lookup
         {
-            CacheEntry cached = cache.get(cacheKey);
-            if (cached != null && clock.instant().isBefore(cached.getExpiresAt())) {
+            if (cached.getResponse() != null && cached.isExpired(clock.instant())) {
                 return cached.getResponse();
             }
         }
 
-        // TODO need to evict expired locks and cache entries?
-
-        synchronized (locks.computeIfAbsent(cacheKey, k -> new Object())) {
+        synchronized (cached) {
             // secondary cache lookup after blocking on the lock
-            val cached = cache.get(cacheKey);
-            if (cached != null && clock.instant().isBefore(cached.getExpiresAt())) {
+            if (cached.getResponse() != null && cached.isExpired(clock.instant())) {
                 return cached.getResponse();
             }
 
             // Make request (with If-None-Match if available)
             final HttpResponse response;
-            if (cached != null && cached.getETag() != null) {
+            if (cached.getResponse() != null && cached.getETag() != null) {
                 response = delegate.exchange(request.withHeader(IF_NONE_MATCH, cached.getETag()));
             } else {
                 response = delegate.exchange(request);
@@ -73,24 +69,30 @@ public class CacheAwareHttpFunction implements HttpFunction {
 
             // Cache OK responses and extend the duration on a NOT_MODIFIED
             if (response.getStatusCode() != OK && response.getStatusCode() != NOT_MODIFIED) return response;
-            if (response.getStatusCode() == NOT_MODIFIED && cached == null) return response;
 
-            // create or update cache entry
-            val cacheControl = CacheControl.from(response);
-            val entry = new CacheEntry(
-                    response.getStatusCode() == OK ? response : Objects.requireNonNull(cached).getResponse(),
-                    clock.instant(),
-                    cacheControl
-                            .map(CacheControl::getMaxAge)
-                            .orElseGet(() -> cached != null ? cached.getMaxAge() : DEFAULT_MAX_AGE),
-                    cacheControl.isPresent() ? cacheControl.get().getETag() : cached != null ? cached.getETag() : null
-            );
-            cache.put(cacheKey, entry);
+            // TODO only cache when cache-control header is present
+
+            // update cache data
+            cached.setUpdatedAt(clock.instant());
+            if (response.getStatusCode() == OK) cached.setResponse(response);
+            CacheControl.from(response).ifPresent(cacheControl -> {
+                cached.setMaxAge(cacheControl.getMaxAge());
+                Optional.ofNullable(cacheControl.getETag()).ifPresent(cached::setETag);
+            });
 
             // prune cache
+            val now = clock.instant();
+            for (val entry : cache.entrySet()) {
+                if (entry.getValue().shouldPurge(now)) {
+                    synchronized (entry.getValue()) {
+                        if (entry.getValue().shouldPurge(now)) {
+                            cache.remove(entry.getKey());
+                        }
+                    }
+                }
+            }
 
-
-            return entry.getResponse();
+            return cached.getResponse();
         }
     }
 
@@ -107,6 +109,25 @@ public class CacheAwareHttpFunction implements HttpFunction {
 
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Failed to create SHA-256 digest", e);
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static class CacheEntry {
+        private static final int PURGE_THRESHOLD_MULTIPLIER = 2;
+
+        private @Getter @Setter @NonNull @lombok.NonNull Instant updatedAt;
+        private @Getter @Setter @NonNull @lombok.NonNull Duration maxAge;
+
+        private @Setter @Getter HttpResponse response;
+        private @Setter @Getter String eTag;
+
+        public boolean isExpired(Instant now) {
+            return updatedAt.plus(maxAge).isBefore(now);
+        }
+
+        public boolean shouldPurge(Instant now) {
+            return updatedAt.plus(maxAge.multipliedBy(PURGE_THRESHOLD_MULTIPLIER)).isBefore(now);
         }
     }
 }

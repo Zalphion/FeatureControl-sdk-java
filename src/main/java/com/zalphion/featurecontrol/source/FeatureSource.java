@@ -5,6 +5,7 @@ import com.zalphion.featurecontrol.ApplicationProperty;
 import com.zalphion.featurecontrol.bundle.FeatureBundle;
 import com.zalphion.featurecontrol.lib.result.Failure;
 import com.zalphion.featurecontrol.lib.result.Result;
+import com.zalphion.featurecontrol.lib.result.Success;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 
@@ -25,6 +26,32 @@ public abstract class FeatureSource {
         } catch (Exception e) {
             return new Failure<>(Optional.ofNullable(e.getMessage()).orElse("Unknown error"));
         }
+    }
+
+    /*
+     * Factories
+     */
+
+    public static @NonNull FeatureSource create(Result<FeatureBundle> result) {
+        return new FeatureSource() {
+            @Override
+            protected @NonNull @lombok.NonNull Result<FeatureBundle> getInternal() {
+                return result;
+            }
+        };
+    }
+
+    public static @NonNull FeatureSource create(FeatureBundle bundle) {
+        return create(() -> bundle);
+    }
+
+    public static @NonNull FeatureSource create(Supplier<FeatureBundle> supplier) {
+        return new FeatureSource() {
+            @Override
+            protected @NonNull @lombok.NonNull Result<FeatureBundle> getInternal() {
+                return new Success<>(supplier.get());
+            }
+        };
     }
 
     /*
@@ -58,7 +85,7 @@ public abstract class FeatureSource {
         return property(name, Function.identity(), defaultValue);
     }
 
-    public @NonNull ApplicationProperty<String> string(
+    public @NonNull ApplicationProperty<String> stringProperty(
             @NonNull @lombok.NonNull String name,
             @NonNull @lombok.NonNull String defaultValue
     ) {

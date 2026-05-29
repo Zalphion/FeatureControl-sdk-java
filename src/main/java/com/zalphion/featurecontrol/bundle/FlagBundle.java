@@ -3,7 +3,9 @@ package com.zalphion.featurecontrol.bundle;
 import com.zalphion.featurecontrol.lib.result.Failure;
 import com.zalphion.featurecontrol.lib.result.Result;
 import com.zalphion.featurecontrol.lib.result.Success;
+import lombok.Builder;
 import lombok.Data;
+import lombok.Singular;
 import lombok.val;
 import org.jspecify.annotations.NonNull;
 
@@ -15,9 +17,10 @@ import java.util.function.Function;
 import java.util.zip.CRC32;
 
 @Data
+@Builder
 public class FlagBundle {
-    private final @NonNull Map<@NonNull String, @NonNull String> overrides;
-    private final @NonNull List<@NonNull VariantBucket> buckets;
+    private final @Singular @NonNull Map<@NonNull String, @NonNull String> overrides;
+    private final @Singular @NonNull List<@NonNull VariantBucket> buckets;
     private final @NonNull String saltBase64;
 
     public Result<String> evaluate(

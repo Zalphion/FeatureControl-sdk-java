@@ -2,6 +2,7 @@ plugins {
     java
     alias(libs.plugins.lombok)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.shadow)
 }
 
 java {
@@ -16,12 +17,15 @@ repositories {
 
 dependencies {
     compileOnly(libs.jspecify)
+
     implementation(libs.argo)
     implementation(libs.slf4j.api)
 
+    testCompileOnly(libs.jspecify)
+
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.forkhandles.time4k)
-    testImplementation("org.hamcrest:java-hamcrest:2.0.0.0")
+    testImplementation(libs.assertj)
 
     testRuntimeOnly(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
@@ -43,4 +47,8 @@ sourceSets {
 val examplesImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
     extendsFrom(configurations.testImplementation.get())
+}
+
+tasks.shadowJar {
+    relocate("argo", "com.zalphion.featurecontrol.lib.argo")
 }
