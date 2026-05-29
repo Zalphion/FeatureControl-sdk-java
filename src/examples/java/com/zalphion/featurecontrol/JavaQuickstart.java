@@ -1,35 +1,30 @@
 package com.zalphion.featurecontrol;
 
-import com.zalphion.featurecontrol.client.FeatureControl;
-import com.zalphion.featurecontrol.source.JavaFeatureSourceBuilder;
+import com.zalphion.featurecontrol.source.ApplicationSource;
 
 public class JavaQuickstart {
 
     public static void main(String[] args) {
         /*
-         * Build a FeatureFlags instance from the cloud provider.
+         * Build a FeatureFlags instance from the Feature Control: Canada region.
          * The pre-fetching wrapper will cache the latest data and periodically refresh it.
-         *
-         * Fetching occurs in the background, but you can block on the `FeatureSource` for readiness.
-         * This is not recommended for production servers, as it may stall the application.
          */
-        final var features = JavaFeatureSourceBuilder
-                .http(FeatureControl.getNorthAmerica(), System.getenv("FEATURE_CONTROL_SDK_KEY"))
-                .preFetching(null, null, null);
-
+        final ApplicationSource source = FeatureControl.canada()
+                .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
+                .preFetching();
 
         /*
          * You can define a property or flag on init and share it within your application;
          * this is the idiomatic way to use FeatureControl.
          */
-        final var greetingProperty = features.getProperty("greeting", "hello", (value) -> value);
-        final var myFeatureFlag = features.getFlag("my-feature", "off");
+        ApplicationProperty<String> greetingProperty = source.stringProperty("greeting", "hello");
+        FeatureFlag myFeatureFlag = source.flag("my-feature", "off");
 
         /*
          * Get the latest property value.
          * If the features are not yet ready, the default value is returned.
          */
-        System.out.println(greetingProperty.get());
+        System.out.println(greetingProperty.getValue());
 
         /*
          * Evaluate the flag for a recipient.

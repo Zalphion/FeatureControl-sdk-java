@@ -5,11 +5,15 @@
 > [!WARNING]
 > Work in progress
 
-Official JVM SDK for the Feature Control Platform.  Supports **Kotlin** and **Java**.
+Official JVM SDK for the Feature Control Platform.
+**Java**-first, and **Kotlin**-friendly with its fluent-API and null-safety guarantees.
 
 ## Requirements
 
-- JDK 17+
+- Java 8+
+- slf4j-api: 1.4.3+
+
+Barebone dependencies with conservative versioning in support of legacy applications.
 
 ## Quickstart
 
@@ -75,7 +79,7 @@ public class JavaQuickstart {
          * Fetching occurs in the background, but you can block on the `FeatureSource` for readiness.
          * This is not recommended for production servers, as it may stall the application.
          */
-        final var features = JavaFeatureSourceBuilder
+        val features = JavaFeatureSourceBuilder
                 .http(FeatureControl.getNorthAmerica(), System.getenv("FEATURE_CONTROL_SDK_KEY"))
                 .preFetching(null, null, null);
 
@@ -84,8 +88,8 @@ public class JavaQuickstart {
          * You can define a property or flag on init and share it within your application;
          * this is the idiomatic way to use FeatureControl.
          */
-        final var greetingProperty = features.getProperty("greeting", "hello", (value) -> value);
-        final var myFeatureFlag = features.getFlag("my-feature", "off");
+        val greetingProperty = features.getProperty("greeting", "hello", (value) -> value);
+        val myFeatureFlag = features.getFlag("my-feature", "off");
 
         /*
          * Get the latest property value.
@@ -193,7 +197,7 @@ public class JavaTest {
                 @NotNull Random random,
                 @NotNull JavaFeatureSource source
         ) {
-            final var flag = source.getFlag("treats-doctrine", "plenty");
+            val flag = source.getFlag("treats-doctrine", "plenty");
             return new BusinessModule(random, flag);
         }
 

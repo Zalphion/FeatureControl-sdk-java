@@ -9,19 +9,34 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java-test-version: [ 8, 11, 17, 21, 25 ]
     steps:
       - name: Checkout latest code
         uses: actions/checkout@v6
 
-      - name: Set up JVM
+      - name: Setup Gradle JVM
         uses: actions/setup-java@v5
+        id: gradleJdk
         with:
-          java-version: 17
+          java-version: 25
           distribution: temurin
           cache: gradle
 
+      - name: Setup Test JVM
+        uses: actions/setup-java@v5
+        id: testJdk
+        with:
+          java-version: ${{ matrix.java-test-version }}
+          distribution: temurin
+
       - name: Test
-        run: sh ./gradlew check --no-configuration-cache --info
+        run: ./gradlew check -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
+        env:
+          ORG_GRADLE_PROJECT_testJavaVersion: ${{ matrix.java-test-version }}
+
   publish:
     needs: [ test ]
     runs-on: ubuntu-latest
@@ -33,7 +48,7 @@ jobs:
       - name: Set up JVM
         uses: actions/setup-java@v5
         with:
-          java-version: 17
+          java-version: 8
           distribution: temurin
           cache: gradle
 

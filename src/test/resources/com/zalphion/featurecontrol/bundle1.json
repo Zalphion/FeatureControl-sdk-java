@@ -15,12 +15,12 @@
           "threshold": 8
         }
       ],
-      "saltHex": "abcd"
+      "saltBase64": "bG9sY2F0cw=="
     },
     "treats": {
       "overrides": {},
       "buckets": [],
-      "saltHex": "efgh"
+      "saltBase64": "ZmxhZzI="
     }
   },
   "properties": {

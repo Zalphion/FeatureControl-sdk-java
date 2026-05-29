@@ -1,7 +1,14 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.serialization)
+    java
+    alias(libs.plugins.lombok)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.shadow)
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
 }
 
 repositories {
@@ -9,37 +16,32 @@ repositories {
 }
 
 dependencies {
-    api(libs.forkhandles.result4k)
+    compileOnly(libs.jspecify)
 
+    implementation(libs.argo)
     implementation(libs.slf4j.api)
-    implementation(libs.kotlin.serialization)
-    implementation(libs.okhttp)
 
     testImplementation(libs.junit.jupiter.api)
-    testImplementation(libs.forkhandles.result4k.kotest)
-    testImplementation(libs.forkhandles.time4k)
-    testImplementation(libs.kotest.assertions.core.jvm)
+    testImplementation(libs.assertj)
 
     testRuntimeOnly(libs.junit.jupiter)
-    testRuntimeOnly(libs.slf4j.simple)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.slf4j.simple)
 }
 
-kotlin {
-    jvmToolchain(17)
-    compilerOptions {
-        allWarningsAsErrors = true
+configurations {
+    testCompileOnly {
+        extendsFrom(configurations.compileOnly.get())
     }
 }
 
-tasks.test {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
 
 sourceSets {
     create("examples") {
         java.srcDirs("src/examples/java")
-        kotlin.srcDirs("src/examples/kotlin")
         compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
         runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
     }
@@ -48,4 +50,25 @@ sourceSets {
 val examplesImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
     extendsFrom(configurations.testImplementation.get())
+}
+
+tasks.shadowJar {
+    // replace original JAR for maven distribution
+    archiveClassifier.set("")
+
+    // vendor argo, but move to a new package
+    relocate("argo", "com.zalphion.featurecontrol.lib.argo")
+
+    // don't vendor slf4j-api
+    dependencies {
+        exclude(dependency("org.slf4j:slf4j-api:.*"))
+    }
+
+    // include project license
+    from(rootProject.file("LICENSE")) {
+        into("")
+    }
+
+    // remove unused vendored code
+    minimize()
 }
