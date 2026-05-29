@@ -5,11 +5,15 @@
 > [!WARNING]
 > Work in progress
 
-Official JVM SDK for the Feature Control Platform.  Supports **Kotlin** and **Java**.
+Official JVM SDK for the Feature Control Platform.
+**Java**-first, and **Kotlin**-friendly with its fluent-API and null-safety guarantees.
 
 ## Requirements
 
-- JDK 17+
+- Java 8+
+- slf4j-api: 1.4.3+
+
+Barebone dependencies with conservative versioning in support of legacy applications.
 
 ## Quickstart
 

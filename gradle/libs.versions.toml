@@ -1,28 +1,18 @@
 [versions]
 
-kotlin = "2.3.21"
-junit = "5.10.5" # Limit for java 8 support
-forkhandles = "2.25.5.0"
-slf4j = "2.0.18"
+junit = "5.10.5"
+slf4j = "1.4.3"
 
 [plugins]
 
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version = "0.36.0" }
 lombok = { id = "io.freefair.lombok", version="9.5.0" }
-shadow = { id = "com.gradleup.shadow", version = "9.4.1" }
 
 [libraries]
 
-# forkhandles
-forkhandles-result4k = { module = "dev.forkhandles:result4k", version.ref = "forkhandles" }
-forkhandles-result4k-kotest = { module = "dev.forkhandles:result4k-kotest", version.ref = "forkhandles" }
-forkhandles-time4k = { module = "dev.forkhandles:time4k", version.ref = "forkhandles" }
-
 # junit
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit" }
 
 # slf4j
@@ -30,8 +20,6 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 # other
-kotlin-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.11.0" }
-kotest-assertions-core-jvm = { module = "io.kotest:kotest-assertions-core-jvm", version = "6.1.11" }
-okhttp = { module = "com.squareup.okhttp3:okhttp", version = "5.3.2" }
 argo = { module = "net.sourceforge.argo:argo", version = "7.24" }
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
+forkhandles-time4k = { module = "dev.forkhandles:time4k", version = "2.25.5.0" }

@@ -1,6 +1,6 @@
 package com.zalphion.featurecontrol;
 
-import lombok.val;
+import com.zalphion.featurecontrol.source.FeatureSource;
 
 public class Main {
     public static void main(String[] args) {
@@ -10,18 +10,18 @@ public class Main {
          * Using an embedded API key to pull features from the North America cloud.
          * Pre-fetching and periodically refreshing for non-blocking operation.
          */
-        val features = FeatureControl.northAmerica()
-                .toFeatureSource(System.getenv("SDK_KEY"))
+        final FeatureSource features = FeatureControl.northAmerica()
+                .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
                 .preFetching();
 
         /*
-         * Step 2: Configure Application
-         * Create feature flags and type property references.
-         * Inject them into your application logic; they will always be up to date with the FeatureSource.
+         * Step 2: Configure your Application
+         * Create feature flags and property references.
+         * Inject them into your application; they will always be up to date with the FeatureSource.
          */
-        val module = BusinessModule.builder()
-                .dashboardFlag(features.flag("business-module", "off"))
-                .excitementLevel(features.property("excitement-level", Integer::parseInt, 1))
+        final BusinessModule module = BusinessModule.builder()
+                .dashboardFlag(features.flag("dashboard", "off"))
+                .excitementLevel(features.property("excitement", Integer::parseInt, 1))
                 .build();
 
         /*

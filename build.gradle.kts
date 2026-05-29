@@ -1,8 +1,7 @@
 plugins {
     java
     alias(libs.plugins.lombok)
-    alias(libs.plugins.shadow)
-//    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.maven.publish)
 }
 
 java {
@@ -25,6 +24,7 @@ dependencies {
     testImplementation("org.hamcrest:java-hamcrest:2.0.0.0")
 
     testRuntimeOnly(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.slf4j.simple)
 }
 
@@ -43,9 +43,4 @@ sourceSets {
 val examplesImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.implementation.get())
     extendsFrom(configurations.testImplementation.get())
-}
-
-tasks.shadowJar {
-    // replace unshaded jar
-    archiveClassifier.set("")
 }

@@ -21,4 +21,14 @@ public interface HttpMessage {
     default @NonNull @lombok.NonNull Optional<String> getHeaderValue(@NonNull @lombok.NonNull String key) {
         return getHeader(key).flatMap(header -> header.stream().findFirst());
     }
+
+    @NonNull @lombok.NonNull HttpMessage withHeader(
+            @NonNull @lombok.NonNull String key,
+            @NonNull @lombok.NonNull List<String> values
+    );
+
+    @NonNull @lombok.NonNull HttpMessage withHeader(
+            @NonNull @lombok.NonNull String key,
+            @NonNull @lombok.NonNull String value
+    );
 }
