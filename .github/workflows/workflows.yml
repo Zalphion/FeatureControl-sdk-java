@@ -33,10 +33,10 @@ jobs:
           distribution: temurin
 
       - name: Verify Java Version
-        run: ./gradlew --version -Dorg.gradle.java.home=${{steps.testjdk.outputs.path}} -PtestJavaVersion=${{ matrix.java-test-version }}
+        run: ./gradlew --version -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} -PtestJavaVersion=${{ matrix.java-test-version }}
 
       - name: Test
-        run: ./gradlew check -Dorg.gradle.java.home=${{steps.testjdk.outputs.path}} --no-configuration-cache --info
+        run: ./gradlew check -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
         env:
           ORG_GRADLE_PROJECT_testJavaVersion: ${{ matrix.java-test-version }}
 
