@@ -12,17 +12,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java-version: [ 8, 11, 17, 21, 25 ]
+        java-test-version: [ 8, 11, 17, 21, 25 ]
     steps:
       - name: Checkout latest code
         uses: actions/checkout@v6
 
-      - name: Set up JVM
+      - name: Setup Gradle JVM
         uses: actions/setup-java@v5
         with:
-          java-version: ${{ matrix.java-version }}
+          java-version: 25
           distribution: temurin
           cache: gradle
+
+      - name: Setup Test JVM
+        uses: actions/setup-java@v5
+        id: testJdk
+        with:
+          java-version: ${{ matrix.java-test-version }}
+          distribution: temurin
+        env:
+          org.gradle.java.home: ${{ steps.testjdk.outputs.path }}
 
       - name: Test
         run: sh ./gradlew check --no-configuration-cache --info
