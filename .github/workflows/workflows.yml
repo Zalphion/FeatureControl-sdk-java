@@ -31,8 +31,11 @@ jobs:
           java-version: ${{ matrix.java-test-version }}
           distribution: temurin
 
+      - name: Verify Java Version
+        run: ./gradlew help -PtestJavaVersion=${{ matrix.java-test-version }} --info
+
       - name: Test
-        run: sh ./gradlew check --no-configuration-cache --info
+        run: ./gradlew check --no-configuration-cache --info
         env:
           ORG_GRADLE_PROJECT_testJavaVersion: ${{ matrix.java-test-version }}
 
