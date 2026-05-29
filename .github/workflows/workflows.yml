@@ -34,7 +34,7 @@ jobs:
       - name: Test
         run: sh ./gradlew check --no-configuration-cache --info
         env:
-          org.gradle.java.home: ${{ steps.testjdk.outputs.path }}
+          ORG_GRADLE_PROJECT_testJavaVersion: ${{ matrix.java-test-version }}
 
   publish:
     needs: [ test ]
