@@ -1,6 +1,7 @@
 # FeatureControl-sdk-java
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/maven-central/v/com.zalphion.featurecontrol/sdk-java)](https://mvnrepository.com/artifact/dev.andrewohara)
 
 > [!WARNING]
 > Work in progress
@@ -15,8 +16,6 @@ Official Java SDK for the Feature Control Platform.
 ## Quickstart
 
 ### Gradle
-
-TODO central badge
 
 ```kotlin
 dependencies {
