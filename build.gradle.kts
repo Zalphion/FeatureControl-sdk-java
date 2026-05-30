@@ -31,6 +31,6 @@ subprojects {
 
 dependencies {
     implementation(project(":sdk"))
-    implementation(project(":http:okhttp5"))
+    implementation(project(":http-okhttp5"))
     testImplementation(testFixtures(project(":sdk")))
 }
