@@ -23,14 +23,14 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OkHttp3HttpFunction implements HttpFunction {
+public class OkHttp5HttpFunction implements HttpFunction {
     private final OkHttpClient client;
 
-    public OkHttp3HttpFunction() throws IOException {
+    public OkHttp5HttpFunction() throws IOException {
         this(Duration.ofSeconds(10), Duration.ofSeconds(10));
     }
 
-    public OkHttp3HttpFunction(
+    public OkHttp5HttpFunction(
             @NonNull @lombok.NonNull Duration readTimeout,
             @NonNull @lombok.NonNull Duration connectTimeout
     ) throws IOException {
@@ -53,18 +53,11 @@ public class OkHttp3HttpFunction implements HttpFunction {
                 .build();
 
         try (val response = client.newCall(okHttpRequest).execute()) {
-            byte[] bodyBytes;
-            if (response.body() == null) {
-                bodyBytes = new byte[0];
-            } else {
-                bodyBytes = response.body().bytes();
-            }
-
             return HttpResponse.builder()
                     .statusCode(response.code())
                     .statusReason(response.message())
                     .headers(response.headers().toMultimap())
-                    .body(bodyBytes)
+                    .body(response.body().bytes())
                     .build();
         } catch (ConnectException e) {
             return HttpResponse.builder().statusCode(503).statusReason("Connection Refused").build();

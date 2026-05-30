@@ -1,19 +1,19 @@
 import com.zalphion.featurecontrol.ApplicationProperty;
 import com.zalphion.featurecontrol.FeatureControl;
 import com.zalphion.featurecontrol.FeatureFlag;
-import com.zalphion.featurecontrol.http.OkHttp3HttpFunction;
+import com.zalphion.featurecontrol.http.OkHttp5HttpFunction;
 import com.zalphion.featurecontrol.source.ApplicationSource;
 
 import java.io.IOException;
 
 public class Quickstart {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         /*
          * Build a FeatureFlags instance from the Feature Control: Canada region.
          * The pre-fetching wrapper will cache the latest data and periodically refresh it.
          */
-        final ApplicationSource source = FeatureControl.canada(new OkHttp3HttpFunction())
+        final ApplicationSource source = FeatureControl.canada(new OkHttp5HttpFunction())
                 .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
                 .preFetching();
 
@@ -25,8 +25,16 @@ public class Quickstart {
         FeatureFlag myFeatureFlag = source.flag("my-feature", "off");
 
         /*
+         * Wait for the application to start.
+         * This gives the preFetcher time to download the latest ApplicationBundle.
+         *
+         * If your application is synchronous (e.g. a CLI tool), don't use the preFetcher.
+         */
+        Thread.sleep(2000);  // for illustrative purposes only; simulating server startup
+
+        /*
          * Get the latest property value.
-         * If the features are not yet ready, the default value is returned.
+         * If a bundle isn't ready in time, returns the default value.
          */
         System.out.println(greetingProperty.getValue());
 

@@ -11,6 +11,6 @@ public class OkHttp4ApplicationSourceTest extends ApplicationSourceContract {
 
     @Override
     protected @NonNull HttpFunction createHttpFunction(@NonNull Supplier<Instant> clock) throws IOException {
-        return new OkHttp3HttpFunction();
+        return new OkHttp4HttpFunction();
     }
 }

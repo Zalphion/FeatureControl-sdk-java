@@ -1,5 +1,5 @@
 import com.zalphion.featurecontrol.FeatureControl;
-import com.zalphion.featurecontrol.http.OkHttp3HttpFunction;
+import com.zalphion.featurecontrol.http.OkHttp5HttpFunction;
 import com.zalphion.featurecontrol.source.ApplicationSource;
 
 import java.io.IOException;
@@ -15,7 +15,7 @@ public class Main {
          */
         final ApplicationSource source = new FeatureControl(
                 URI.create("http://featurecontrol.internal"),
-                new OkHttp3HttpFunction()
+                new OkHttp5HttpFunction()
         )
                 .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
                 .preFetching();
