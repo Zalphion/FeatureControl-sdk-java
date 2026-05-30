@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [ published ]
 
 jobs:
   test:
@@ -17,7 +19,7 @@ jobs:
       - name: Checkout latest code
         uses: actions/checkout@v6
 
-      - name: Setup Gradle JVM
+      - name: Setup Gradle JDK
         uses: actions/setup-java@v5
         id: gradleJdk
         with:
@@ -25,17 +27,14 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Setup Test JVM
+      - name: Setup Build JDK
         uses: actions/setup-java@v5
-        id: testJdk
         with:
           java-version: ${{ matrix.java-test-version }}
           distribution: temurin
 
       - name: Test
         run: ./gradlew check -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
-        env:
-          ORG_GRADLE_PROJECT_testJavaVersion: ${{ matrix.java-test-version }}
 
   publish:
     needs: [ test ]
@@ -45,7 +44,15 @@ jobs:
       - name: Checkout latest code
         uses: actions/checkout@v6
 
-      - name: Set up JVM
+      - name: Setup Gradle JDK
+        uses: actions/setup-java@v5
+        id: gradleJdk
+        with:
+          java-version: 25
+          distribution: temurin
+          cache: gradle
+
+      - name: Setup Build JDK
         uses: actions/setup-java@v5
         with:
           java-version: 8
@@ -53,7 +60,7 @@ jobs:
           cache: gradle
 
       - name: Publish to Maven Central
-        run: ./gradlew publish --no-configuration-cache --info
+        run: ./gradlew publish -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
         env:
           ORG_GRADLE_PROJECT_VERSION_NAME: ${{ github.event.release.tag_name }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.central_username }}

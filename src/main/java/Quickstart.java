@@ -1,39 +1,14 @@
-# FeatureControl-sdk-java
+import com.zalphion.featurecontrol.ApplicationProperty;
+import com.zalphion.featurecontrol.FeatureControl;
+import com.zalphion.featurecontrol.FeatureFlag;
+import com.zalphion.featurecontrol.http.OkHttp3HttpFunction;
+import com.zalphion.featurecontrol.source.ApplicationSource;
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+import java.io.IOException;
 
-> [!WARNING]
-> Work in progress
-
-Official Java SDK for the Feature Control Platform.
-
-## Requirements
-
-- Java 8+
-- slf4j-api: 1.4.3+
-
-## Quickstart
-
-### Gradle
-
-TODO central badge
-
-```kotlin
-dependencies {
-    implementation("com.zalphion.featurecontrol:sdk-okhttp5:<version>")
-  
-    // Or legacy OkHttp3
-    implementation("com.zalphion.featurecontrol:sdk-okhttp4:<version>")
-  
-    // Or when you're already in dependency hell
-    implementation("com.zalphion.featurecontrol:sdk-java8:<version>")
-}
-```
-
-```java
 public class Quickstart {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         /*
          * Build a FeatureFlags instance from the Feature Control: Canada region.
          * The pre-fetching wrapper will cache the latest data and periodically refresh it.
@@ -74,9 +49,3 @@ public class Quickstart {
         }
     }
 }
-```
-
-## Examples
-
-- [Examples](https://github.com/Zalphion/FeatureControl-sdk-java/tree/main/src/main/java)
-- [Testing](https://github.com/Zalphion/FeatureControl-sdk-java/tree/main/src/test/java)
