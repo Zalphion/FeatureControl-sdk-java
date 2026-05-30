@@ -25,7 +25,7 @@ allprojects {
 
 subprojects {
     pluginManager.apply("java-library")
-    pluginManager.apply("maven-publish")
+    pluginManager.apply("com.vanniktech.maven.publish")
     pluginManager.apply("io.freefair.lombok")
 }
 

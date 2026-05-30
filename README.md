@@ -20,13 +20,13 @@ TODO central badge
 
 ```kotlin
 dependencies {
-    implementation("com.zalphion.featurecontrol:sdk-okhttp5:<version>")
+    implementation("com.zalphion.featurecontrol:sdk-java-okhttp5:<version>")
   
     // Or legacy OkHttp3
-    implementation("com.zalphion.featurecontrol:sdk-okhttp4:<version>")
+    implementation("com.zalphion.featurecontrol:sdk-java-okhttp4:<version>")
   
     // Or when you're already in dependency hell
-    implementation("com.zalphion.featurecontrol:sdk-java8:<version>")
+    implementation("com.zalphion.featurecontrol:sdk-java-8:<version>")
 }
 ```
 
