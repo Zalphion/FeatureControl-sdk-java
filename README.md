@@ -1,6 +1,9 @@
+# FeatureControl-sdk-java
+
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# FeatureControl-sdk-java
+> [!WARNING]
+> Work in progress
 
 Official Java SDK for the Feature Control Platform.
 
@@ -9,14 +12,23 @@ Official Java SDK for the Feature Control Platform.
 - Java 8+
 - slf4j-api: 1.4.3+
 
-## Installation
-
-[![Maven Central Version](https://img.shields.io/maven-central/v/com.zalphion/FeatureControl-sdk-java)](https://central.sonatype.com/artifact/com.zalphion/hFeatureControl-sdk-java)
-
-> [!WARNING]
-> Work in progress
-
 ## Quickstart
+
+### Gradle
+
+TODO central badge
+
+```kotlin
+dependencies {
+    implementation("com.zalphion.featurecontrol:sdk-okhttp5:<version>")
+  
+    // Or legacy OkHttp3
+    implementation("com.zalphion.featurecontrol:sdk-okhttp4:<version>")
+  
+    // Or when you're already in dependency hell
+    implementation("com.zalphion.featurecontrol:sdk-java8:<version>")
+}
+```
 
 ```java
 public class Quickstart {
@@ -26,7 +38,7 @@ public class Quickstart {
          * Build a FeatureFlags instance from the Feature Control: Canada region.
          * The pre-fetching wrapper will cache the latest data and periodically refresh it.
          */
-        final ApplicationSource source = FeatureControl.canada()
+        final ApplicationSource source = FeatureControl.canada(new OkHttp3HttpFunction())
                 .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
                 .preFetching();
 
@@ -66,4 +78,5 @@ public class Quickstart {
 
 ## Examples
 
-[Examples Directory](https://github.com/Zalphion/FeatureControl-sdk-java/tree/main/src/examples/java)
+- [Examples](https://github.com/Zalphion/FeatureControl-sdk-java/tree/main/src/main/java)
+- [Testing](https://github.com/Zalphion/FeatureControl-sdk-java/tree/main/src/test/java)

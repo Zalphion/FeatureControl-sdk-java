@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class HttpUrlConnectionApplicationSourceTest extends ApplicationSourceContract {
+public class Java8ApplicationSourceTest extends ApplicationSourceContract {
 
     @Test
     public void get_eTagExpired() {
@@ -50,7 +50,7 @@ public class HttpUrlConnectionApplicationSourceTest extends ApplicationSourceCon
 
     @Override
     protected @NonNull HttpFunction createHttpFunction(@NonNull Supplier<Instant> clock) {
-        return HttpUrlConnectionHttpFunction.create(
+        return Java8HttpFunction.create(
                 Duration.ofSeconds(10),
                 Duration.ofSeconds(10),
                 clock

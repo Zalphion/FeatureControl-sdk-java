@@ -1,4 +1,4 @@
-rootProject.name = "FeatureControl-sdk-jvm"
+rootProject.name = "FeatureControl-sdk-java"
 
-include(":core")
-include(":http:okhttp4", ":http:okhttp5", ":http:httpUrlConnection")
+include(":sdk")
+include(":http:okhttp4", ":http:okhttp5", ":http:java8")

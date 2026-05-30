@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * You should consider a more modern implementation.
  */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class HttpUrlConnectionHttpFunction implements HttpFunction {
+public class Java8HttpFunction implements HttpFunction {
     private final @NonNull Duration readTimeout;
     private final @NonNull Duration connectTimeout;
 
@@ -41,7 +41,7 @@ public class HttpUrlConnectionHttpFunction implements HttpFunction {
             @NonNull @lombok.NonNull Duration connectTimeout,
             @NonNull@lombok.NonNull Supplier<Instant> clock
     ) {
-        val inner = new HttpUrlConnectionHttpFunction(readTimeout, connectTimeout);
+        val inner = new Java8HttpFunction(readTimeout, connectTimeout);
         return new CacheAwareHttpFunction(inner, clock);
     }
 
