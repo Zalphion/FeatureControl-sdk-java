@@ -1,7 +1,7 @@
 package com.zalphion.featurecontrol.source;
 
 import com.zalphion.featurecontrol.bundle.ApplicationBundle;
-import com.zalphion.featurecontrol.lib.result.Result;
+import com.zalphion.featurecontrol.lib.Result;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -18,7 +18,6 @@ public class PreFetchingApplicationSource extends ApplicationSource implements A
     private final @lombok.NonNull Duration retryInterval;
     private final @lombok.NonNull ScheduledExecutorService scheduler;
 
-    // FIXME don't include in lombok
     private final AtomicReference<ApplicationBundle> cache = new AtomicReference<>();
 
     public PreFetchingApplicationSource(@NonNull @lombok.NonNull ApplicationSource inner) {

@@ -31,5 +31,6 @@ subprojects {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":http:okhttp5"))
     testImplementation(testFixtures(project(":core")))
 }

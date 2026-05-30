@@ -7,34 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  testJava8:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout latest code
-        uses: actions/checkout@v6
-
-      - name: Setup Gradle JDK
-        uses: actions/setup-java@v5
-        id: gradleJdk
-        with:
-          java-version: 25
-          distribution: temurin
-          cache: gradle
-
-      - name: Setup Build JDK
-        uses: actions/setup-java@v5
-        with:
-          java-version: 8
-          distribution: temurin
-
-      - name: Test
-        run: ./gradlew core:check -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
-  testJava11AndOn:
+  test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        java-test-version: [ 11, 17, 21, 25 ]
+        java-test-version: [ 8, 11, 17, 21, 25 ]
     steps:
       - name: Checkout latest code
         uses: actions/checkout@v6
@@ -56,8 +34,8 @@ jobs:
       - name: Test
         run: ./gradlew check -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
 
-  publishJava8:
-    needs: [ testJava8, testJava11AndOn ]
+  publish:
+    needs: [ test ]
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps:
@@ -80,38 +58,7 @@ jobs:
           cache: gradle
 
       - name: Publish to Maven Central
-        run: ./gradlew core:publish -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
-        env:
-          ORG_GRADLE_PROJECT_VERSION_NAME: ${{ github.event.release.tag_name }}
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.central_username }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.central_password }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.signing_key }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.signing_key_password }}
-  publishJava11AndOn:
-    needs: [ testJava8, testJava11AndOn ]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release'
-    steps:
-      - name: Checkout latest code
-        uses: actions/checkout@v6
-
-      - name: Setup Gradle JDK
-        uses: actions/setup-java@v5
-        id: gradleJdk
-        with:
-          java-version: 25
-          distribution: temurin
-          cache: gradle
-
-      - name: Setup Build JDK
-        uses: actions/setup-java@v5
-        with:
-          java-version: 11
-          distribution: temurin
-          cache: gradle
-
-      - name: Publish to Maven Central
-        run: ./gradlew http:okhttp3:publish -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
+        run: ./gradlew publish -Dorg.gradle.java.home=${{steps.gradleJdk.outputs.path}} --no-configuration-cache --info
         env:
           ORG_GRADLE_PROJECT_VERSION_NAME: ${{ github.event.release.tag_name }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.central_username }}

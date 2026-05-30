@@ -21,7 +21,6 @@ public class ApplicationBundle {
     public @NonNull ApplicationSource toSource() {
         return ApplicationSource.create(this);
     }
-
     public static @NonNull ApplicationBundle fromClasspath(
             @NonNull @lombok.NonNull String absolutePath,
             @NonNull @lombok.NonNull ClassLoader classLoader

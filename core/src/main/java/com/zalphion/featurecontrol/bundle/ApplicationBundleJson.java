@@ -5,18 +5,14 @@ import argo.JsonGenerator;
 import argo.JsonParser;
 import argo.jdom.JsonField;
 import argo.jdom.JsonNode;
-import com.zalphion.featurecontrol.lib.result.Failure;
-import com.zalphion.featurecontrol.lib.result.Result;
-import com.zalphion.featurecontrol.lib.result.Success;
+import com.zalphion.featurecontrol.lib.Failure;
+import com.zalphion.featurecontrol.lib.Result;
+import com.zalphion.featurecontrol.lib.Success;
 import org.jspecify.annotations.NonNull;
 import java.util.stream.Collectors;
 import lombok.val;
 
-import static argo.jdom.JsonNodeFactories.array;
-import static argo.jdom.JsonNodeFactories.field;
-import static argo.jdom.JsonNodeFactories.number;
-import static argo.jdom.JsonNodeFactories.object;
-import static argo.jdom.JsonNodeFactories.string;
+import static argo.jdom.JsonNodeFactories.*;
 import static argo.jdom.JsonNodeSelectors.*;
 
 public class ApplicationBundleJson {

@@ -12,30 +12,20 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class FakeServer {
     private static final int EMPTY_BODY_LENGTH = -1;
 
-    private final DateTimeFormatter httpDateFormatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
     private final @Getter List<Map.Entry<String, Integer>> responses = new CopyOnWriteArrayList<>();
     private final Map<String, ApplicationBundle> bundles = new ConcurrentHashMap<>();
 
-    private final @NonNull AtomicReference<Instant> clock;
     private final @NonNull @Getter Duration maxAge;
     private final @NonNull HttpServer server;
 
-    public FakeServer(
-            @NonNull @lombok.NonNull AtomicReference<Instant> clock,
-            @NonNull @lombok.NonNull Duration maxAge
-    ) {
-        this.clock = clock;
+    public FakeServer(@NonNull @lombok.NonNull Duration maxAge) {
         this.maxAge = maxAge;
 
         try {
@@ -68,8 +58,6 @@ public class FakeServer {
     }
 
     private void getBundle(@NonNull @lombok.NonNull HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().set("Date", httpDateFormatter.format(clock.get()));
-
         val ifNoneMatch = Optional.ofNullable(exchange.getRequestHeaders().get("If-None-Match"))
                 .orElseGet(Collections::emptyList)
                 .stream().findFirst().orElse(null);

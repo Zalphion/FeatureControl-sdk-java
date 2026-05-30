@@ -1,17 +1,22 @@
 import com.zalphion.featurecontrol.FeatureControl;
+import com.zalphion.featurecontrol.http.OkHttp3HttpFunction;
 import com.zalphion.featurecontrol.source.ApplicationSource;
 
+import java.io.IOException;
 import java.net.URI;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         /*
          * Step 1: Init FeatureSource
          * Using an embedded API key to pull features from a self-hosted Feature Control instance.
          * Pre-fetching and periodically refreshing for non-blocking operation.
          */
-        final ApplicationSource source = new FeatureControl(URI.create("http://featurecontrol.internal"))
+        final ApplicationSource source = new FeatureControl(
+                URI.create("http://featurecontrol.internal"),
+                new OkHttp3HttpFunction()
+        )
                 .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
                 .preFetching();
 

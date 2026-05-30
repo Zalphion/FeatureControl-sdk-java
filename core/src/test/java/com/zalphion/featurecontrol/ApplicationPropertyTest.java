@@ -1,6 +1,6 @@
 package com.zalphion.featurecontrol;
 
-import com.zalphion.featurecontrol.lib.result.Failure;
+import com.zalphion.featurecontrol.lib.Failure;
 import com.zalphion.featurecontrol.source.ApplicationSource;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.*;

@@ -1,8 +1,8 @@
 package com.zalphion.featurecontrol.bundle;
 
-import com.zalphion.featurecontrol.lib.result.Failure;
-import com.zalphion.featurecontrol.lib.result.Result;
-import com.zalphion.featurecontrol.lib.result.Success;
+import com.zalphion.featurecontrol.lib.Failure;
+import com.zalphion.featurecontrol.lib.Result;
+import com.zalphion.featurecontrol.lib.Success;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;

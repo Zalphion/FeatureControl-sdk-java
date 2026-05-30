@@ -1,16 +1,19 @@
 import com.zalphion.featurecontrol.ApplicationProperty;
 import com.zalphion.featurecontrol.FeatureControl;
 import com.zalphion.featurecontrol.FeatureFlag;
+import com.zalphion.featurecontrol.http.OkHttp3HttpFunction;
 import com.zalphion.featurecontrol.source.ApplicationSource;
+
+import java.io.IOException;
 
 public class Quickstart {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         /*
          * Build a FeatureFlags instance from the Feature Control: Canada region.
          * The pre-fetching wrapper will cache the latest data and periodically refresh it.
          */
-        final ApplicationSource source = FeatureControl.canada()
+        final ApplicationSource source = FeatureControl.canada(new OkHttp3HttpFunction())
                 .toFeatureSource(System.getenv("FEATURE_CONTROL_SDK_KEY"))
                 .preFetching();
 

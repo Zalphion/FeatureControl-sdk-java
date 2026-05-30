@@ -1,11 +1,11 @@
 package com.zalphion.featurecontrol.source;
 
 import com.zalphion.featurecontrol.FeatureFlag;
-import com.zalphion.featurecontrol.ApplicationProperty;
 import com.zalphion.featurecontrol.bundle.ApplicationBundle;
-import com.zalphion.featurecontrol.lib.result.Failure;
-import com.zalphion.featurecontrol.lib.result.Result;
-import com.zalphion.featurecontrol.lib.result.Success;
+import com.zalphion.featurecontrol.lib.Failure;
+import com.zalphion.featurecontrol.lib.Result;
+import com.zalphion.featurecontrol.lib.Success;
+import com.zalphion.featurecontrol.ApplicationProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 

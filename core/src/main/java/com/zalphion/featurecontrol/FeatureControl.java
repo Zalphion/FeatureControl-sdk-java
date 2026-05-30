@@ -2,11 +2,13 @@ package com.zalphion.featurecontrol;
 
 import com.zalphion.featurecontrol.bundle.ApplicationBundle;
 import com.zalphion.featurecontrol.bundle.ApplicationBundleJson;
-import com.zalphion.featurecontrol.lib.http.*;
-import com.zalphion.featurecontrol.lib.http.cache.CacheAwareHttpFunction;
-import com.zalphion.featurecontrol.lib.result.Failure;
-import com.zalphion.featurecontrol.lib.result.Result;
+import com.zalphion.featurecontrol.http.HttpFunction;
+import com.zalphion.featurecontrol.http.HttpMethod;
+import com.zalphion.featurecontrol.http.HttpRequest;
+import com.zalphion.featurecontrol.lib.Failure;
+import com.zalphion.featurecontrol.lib.Result;
 import com.zalphion.featurecontrol.source.ApplicationSource;
+import lombok.AllArgsConstructor;
 import lombok.val;
 import org.jspecify.annotations.NonNull;
 
@@ -16,35 +18,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 
+@AllArgsConstructor
 public class FeatureControl {
     private final @NonNull URI baseUri;
     private final @NonNull HttpFunction http;
 
-    public FeatureControl(@NonNull @lombok.NonNull URI baseUri) {
-        this(baseUri, new HttpUrlConnectionHttpFunction());
+    public static @lombok.NonNull FeatureControl canada(@NonNull HttpFunction http) {
+        return new FeatureControl(URI.create("https://ca.featurecontrol.app"), http);
     }
 
-    public FeatureControl(@NonNull @lombok.NonNull URI baseUri, @NonNull @lombok.NonNull HttpFunction http) {
-        this.baseUri = baseUri;
-
-        // enforce cache awareness
-        if (http.hasCache()) {
-            this.http = http;
-        } else {
-            this.http = new CacheAwareHttpFunction(http);
-        }
+    public static @lombok.NonNull FeatureControl ireland(HttpFunction http) {
+        return new FeatureControl(URI.create("https://ie.featurecontrol.app"), http);
     }
 
-    public static @lombok.NonNull FeatureControl canada() {
-        return new FeatureControl(URI.create("https://ca.featurecontrol.app"));
-    }
-
-    public static @lombok.NonNull FeatureControl ireland() {
-        return new FeatureControl(URI.create("https://ie.featurecontrol.app"));
-    }
-
-    public static @lombok.NonNull FeatureControl australia() {
-        return new FeatureControl(URI.create("https://au.featurecontrol.app"));
+    public static @lombok.NonNull FeatureControl australia(HttpFunction http) {
+        return new FeatureControl(URI.create("https://au.featurecontrol.app"), http);
     }
 
     public @NonNull Result<ApplicationBundle> getBundle(@NonNull @lombok.NonNull String sdkKey) {
